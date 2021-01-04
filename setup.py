@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='seqio',
-    version=0.03,
+    version=0.04,
     description="Import .seq files into hyperspy",
     author='Carter Francis',
     author_email='csfrancis@wisc.edu',

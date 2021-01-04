@@ -3,7 +3,7 @@ from hyperspy._signals.signal2d import Signal2D
 from hyperspy.io import dict2signal
 
 
-def load(filename, lazy=False, chunks=None, parameters=None):
+def load(filename, lazy=False, chunks=None, nav_shape=None, parameters=None):
     """Loads a .seq file into hyperspy.  Metadata taken from
     the .metadata file as well as from a paramters.txt file that
     can be passed as well.  The parameters file is used calibrate using
@@ -16,6 +16,9 @@ def load(filename, lazy=False, chunks=None, parameters=None):
 
     """
 
-    sig = dict2signal(file_reader(filename=filename, lazy=lazy, chunks=chunks),
+    sig = dict2signal(file_reader(filename=filename,
+                                  lazy=lazy,
+                                  chunks=chunks,
+                                  nav_shape=nav_shape),
                       lazy=lazy)
     return sig

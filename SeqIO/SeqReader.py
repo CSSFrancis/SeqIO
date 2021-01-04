@@ -130,21 +130,27 @@ class SeqReader(object):
                   "as the image and have the form xxx.seq.metadata")
         return
 
-    def create_axes(self):
+    def create_axes(self, nav_shape=None, nav_names=["x","y","time"]):
         axes = []
-        axes.append({'name':'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
-                     'navigate': True, 'index_in_array': 0})
+        if nav_shape is None:
+            axes.append({'name':'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
+                        'navigate': True, 'index_in_array': 0})
+            axes[0]['scale'] = 1 / self.image_dict["FPS"]
+        else:
+            for i, s in enumerate(nav_shape):
+                axes.append({'name': nav_names[i], 'offset': 0, 'scale': 1, 'size': s,
+                             'navigate': True, 'index_in_array': 0})
         axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"],
                      'navigate': False, 'index_in_array': 1})
         axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"],
-                     'navigate': False, 'index_in_array': 2})
+                        'navigate': False, 'index_in_array': 2})
 
         if self.metadata_dict is not {} and self.metadata_dict["PixelSize"] != 0:
             # need to still determine a way to properly set units and scale
-            axes[1]['scale'] = self.metadata_dict["PixelSize"]
-            axes[2]['scale'] = self.metadata_dict["PixelSize"]
+            axes[-2]['scale'] = self.metadata_dict["PixelSize"]
+            axes[-1]['scale'] = self.metadata_dict["PixelSize"]
 
-        axes[0]['scale'] = 1/self.image_dict["FPS"]
+
 
         return axes
 
@@ -198,7 +204,7 @@ class SeqReader(object):
                     data[i] = np.fromfile(file, dtype_list, count=1)
         return data["Array"]
 
-    def read_data(self, lazy=False, chunks=None):
+    def read_data(self, lazy=False, chunks=None, nav_shape=None):
         if lazy:
             if chunks is None:
                 chunks =10
@@ -219,10 +225,13 @@ class SeqReader(object):
             data = concatenate(data, axis=0)
         else:
             data = self.get_image_data()
+        if nav_shape is not None:
+            shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]]
+            data = np.reshape(data, shape)
         return data
 
 
-def file_reader(filename, lazy=False, chunks=10):
+def file_reader(filename, lazy=False, nav_shape=None, chunks=10):
     """Reads a .seq file.
 
     Parameters
@@ -237,9 +246,9 @@ def file_reader(filename, lazy=False, chunks=10):
     seq._get_dark_ref()
     seq._get_gain_ref()
     seq.parse_metadata_file()
-    axes = seq.create_axes()
+    axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
-    data = seq.read_data(lazy=lazy, chunks=chunks)
+    data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
     dictionary = {
         'data': data,
         'metadata': metadata,
