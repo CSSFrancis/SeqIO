@@ -99,7 +99,7 @@ class SeqReader(object):
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
 
             file.seek(580)
-            read_bytes = file.read(4)e
+            read_bytes = file.read(4)
             self.image_dict["ImgBytes"] = struct.unpack('<L', read_bytes[0:4])[0]
 
             file.seek(584)
@@ -131,7 +131,7 @@ class SeqReader(object):
 
     def create_axes(self):
         axes = []
-        axes.append({'name':'time', 'offset': 0, 'scale': 1,'size': self.image_dict["NumFrames"],
+        axes.append({'name':'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
                      'navigate': True, 'index_in_array': 0})
         axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"],
                      'navigate': False, 'index_in_array': 1})
@@ -206,6 +206,7 @@ def file_reader(filename, lazy=False):
     seq._get_gain_ref()
     seq.parse_metadata_file()
     axes = seq.create_axes()
+    print(axes)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy)
     dictionary = {
@@ -213,3 +214,5 @@ def file_reader(filename, lazy=False):
         'metadata': metadata,
         'axes': axes,
         'original_metadata': metadata,}
+
+    return dictionary
