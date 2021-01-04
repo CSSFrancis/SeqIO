@@ -176,21 +176,52 @@ class SeqReader(object):
                     data[i] = np.fromfile(file, dtype_list, count=1)
         return data["Array"]
 
-    def read_data(self, lazy=False):
+    def get_single_image_data(self, im_start, chunk_size):
+        with open(self.file, mode='rb') as file:
+            dtype_list = [(("Array"), self.image_dict["ImageBitDepth"],
+                           (self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]))]
+            # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
+            data = np.empty(chunk_size, dtype=dtype_list)  # creating an empty array
+            max_pix = 2**self.image_dict["ImageBitDepthReal"]
+            for i in range(im_start, im_start+chunk_size):
+                file.seek(8192 + i * self.image_dict["ImgBytes"])
+                if self.dark_ref is not None and self.gain_ref is not None:
+                    d = np.fromfile(file, dtype_list, count=1)
+                    d["Array"] = (d["Array"] - self.dark_ref)
+                    d["Array"][d["Array"] > max_pix] = 0
+                    d["Array"] = d["Array"] * self.gain_ref  # Numpy doesn't check for overflow.
+                    # There might be a better way to do this. OpenCV has a method for subtracting
+                    data[i] = d
+                else:
+                    data[i] = np.fromfile(file, dtype_list, count=1)
+        return data["Array"]
+
+    def read_data(self, lazy=False, chunks=None):
         if lazy:
+            if chunks is None:
+                chunks =10
             from dask import delayed
             from dask.array import from_delayed
-            val = delayed(self.get_image_data(), pure=True)
-            data = from_delayed(val, shape=(self.image_dict["NumFrames"],self.image_dict["ImageWidth"],
-                                            self.image_dict["ImageHeight"]), dtype=self.image_dict["ImageBitDepth"])
-            #data = from_delayed(val, shape=(self.image_dict["NumFrames"],self.image_dict["ImageWidth"],
-             #                               self.image_dict["ImageHeight"]), dtype=self.image_dict["ImageBitDepth"])
+            from dask.array import concatenate
+            per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
+            print(per_chunk)
+            extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
+            chunk = [per_chunk]*(chunks-1) + [extra]
+
+            val = [delayed(self.get_single_image_data, pure=True)(chunk_size, per_chunk*i) for i, chunk_size in enumerate(chunk)]
+            data = [from_delayed(v,
+                                 shape=(chunk_size,
+                                        self.image_dict["ImageWidth"],
+                                        self.image_dict["ImageHeight"]),
+                                 dtype=self.image_dict["ImageBitDepth"])
+                    for chunk_size, v in zip(chunk, val)]
+            data = concatenate(data, axis=0)
         else:
             data = self.get_image_data()
         return data
 
 
-def file_reader(filename, lazy=False):
+def file_reader(filename, lazy=False, chunks=10):
     """Reads a .seq file.
 
     Parameters
@@ -206,7 +237,6 @@ def file_reader(filename, lazy=False):
     seq._get_gain_ref()
     seq.parse_metadata_file()
     axes = seq.create_axes()
-    print(axes)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy)
     dictionary = {

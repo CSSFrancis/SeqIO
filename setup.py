@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='SeqIO',
-    version=0.01,
+    name='seqio',
+    version=0.03,
     description="Import .seq files into hyperspy",
     author='Carter Francis',
     author_email='csfrancis@wisc.edu',
@@ -28,4 +28,5 @@ setup(
         "orix >= 0.3",
         "pyxem"
     ],
+    packages=['SeqIO'],
 )

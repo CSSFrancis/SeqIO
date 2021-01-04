@@ -11,4 +11,5 @@ class Test4D:
 
     def test_lazy_load(self):
         data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True)
+        print(data.data)
         assert isinstance(data, LazySignal2D)
