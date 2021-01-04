@@ -13,3 +13,8 @@ class Test4D:
         data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True)
         print(data.data)
         assert isinstance(data, LazySignal2D)
+
+    def test_lazy_load_chunks(self):
+        data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True, chunks=4)
+        print(data.data)
+        assert isinstance(data, LazySignal2D)

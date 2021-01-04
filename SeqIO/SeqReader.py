@@ -97,6 +97,7 @@ class SeqReader(object):
             read_bytes = file.read(4)
             self.image_dict["NumFrames"] = struct.unpack('<i', read_bytes)[0]
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
+            print(self.image_dict["NumFrames"])
 
             file.seek(580)
             read_bytes = file.read(4)
@@ -183,8 +184,9 @@ class SeqReader(object):
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
             data = np.empty(chunk_size, dtype=dtype_list)  # creating an empty array
             max_pix = 2**self.image_dict["ImageBitDepthReal"]
-            for i in range(im_start, im_start+chunk_size):
-                file.seek(8192 + i * self.image_dict["ImgBytes"])
+            for i in range(chunk_size):
+                start =im_start*self.image_dict["ImgBytes"]
+                file.seek(8192+start + i * self.image_dict["ImgBytes"])
                 if self.dark_ref is not None and self.gain_ref is not None:
                     d = np.fromfile(file, dtype_list, count=1)
                     d["Array"] = (d["Array"] - self.dark_ref)
@@ -204,11 +206,10 @@ class SeqReader(object):
             from dask.array import from_delayed
             from dask.array import concatenate
             per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
-            print(per_chunk)
             extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
             chunk = [per_chunk]*(chunks-1) + [extra]
 
-            val = [delayed(self.get_single_image_data, pure=True)(chunk_size, per_chunk*i) for i, chunk_size in enumerate(chunk)]
+            val = [delayed(self.get_single_image_data, pure=True)(per_chunk*i,chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
                                         self.image_dict["ImageWidth"],
@@ -238,7 +239,7 @@ def file_reader(filename, lazy=False, chunks=10):
     seq.parse_metadata_file()
     axes = seq.create_axes()
     metadata = seq.create_metadata()
-    data = seq.read_data(lazy=lazy)
+    data = seq.read_data(lazy=lazy, chunks=chunks)
     dictionary = {
         'data': data,
         'metadata': metadata,
