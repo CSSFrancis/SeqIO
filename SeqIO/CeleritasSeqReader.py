@@ -59,8 +59,8 @@ class SeqReader(object):
                 self.dark_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]*2))),
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"]*2,
+                                                                     self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])
         except FileNotFoundError:
             print("No Dark Reference image found.  The Dark reference should be in the same directory "
@@ -80,8 +80,8 @@ class SeqReader(object):
                 self.gain_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]*2))),
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"]*2,
+                                                                     self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
         except FileNotFoundError:
             print("No gain reference image found.  The Gain reference should be in the same directory "
