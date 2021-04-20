@@ -22,6 +22,7 @@ setup(
         "hyperspy == 1.6.1",  # earlier versions incompatible with numpy >= 1.17.0 and hyperspy == 1.6.0 has a histogram bug
         "diffsims >= 0.3",  # Makes use of functionality introduced in this release
         "lmfit >= 0.9.12",
+        "numpy>= 1.20.0",
         "pyfai",
         "ipywidgets",
         "numba",
