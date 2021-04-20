@@ -216,7 +216,7 @@ class SeqReader(object):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
             data = np.empty(chunk_size, dtype=self.dtype_full_list)  # creating an empty array
-            max_pix = 2**self.image_dict["ImageBitDepthReal"]
+            max_pix = 2**12
             for i in range(chunk_size):
                 start =im_start*self.image_dict["ImgBytes"]
                 top.seek(8192+start + i * self.image_dict["ImgBytes"])
