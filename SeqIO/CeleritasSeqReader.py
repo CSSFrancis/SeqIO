@@ -192,7 +192,7 @@ class SeqReader(object):
                 if self.dark_ref is not None and self.gain_ref is not None:
                     t = np.fromfile(top, self.dtype_split_list, count=1)
                     b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((t["Array"][0], b["Array"][0]), axis=1)
+                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
                     d = (d - self.dark_ref)
                     d[d > max_pix] = 0
                     d = d * self.gain_ref  # Numpy doesn't check for overflow.
@@ -223,7 +223,7 @@ class SeqReader(object):
                 if self.dark_ref is not None and self.gain_ref is not None:
                     t = np.fromfile(top, self.dtype_split_list, count=1)
                     b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.vstack(t["Array"], b["Array"])
+                    d = np.concatenate((np.flip(t["Array"][0], axis=0), b["Array"][0]), axis=0)
                     d = (d - self.dark_ref)
                     d[d > max_pix] = 0
                     d = d * self.gain_ref  # Numpy doesn't check for overflow.
@@ -234,7 +234,7 @@ class SeqReader(object):
                 else:
                     t = np.fromfile(top, self.dtype_split_list, count=1)
                     b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((t["Array"][0], b["Array"][0]), axis=1)
+                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
                     new_d = np.empty(1, dtype=self.dtype_full_list)
                     new_d["Array"] = d
                     data[i] = new_d
