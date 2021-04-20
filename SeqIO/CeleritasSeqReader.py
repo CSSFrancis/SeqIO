@@ -186,7 +186,7 @@ class SeqReader(object):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
             data = np.empty(self.image_dict["NumFrames"], dtype=self.dtype_full_list)  # creating an empty array
-            max_pix = 2 ** self.image_dict["ImageBitDepthReal"]
+            max_pix = 2 ** 12
             for i in range(self.image_dict["NumFrames"]):
                 top.seek(8192 + i * self.image_dict["ImgBytes"])
                 bottom.seek(8192 + i * self.image_dict["ImgBytes"])
