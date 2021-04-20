@@ -25,8 +25,8 @@ class Test4D:
         import numpy as np
         data = SeqIO.load_celeritas(top='/media/hdd/home/PtNW_100fps_Top_16-32-11.473.seq',
                                     bottom='/media/hdd/home/PtNW_100fps_Bottom_16-32-11.508.seq')
-        print(np.shape(data.data))
-        data.plot()
+        print("the data shape", np.shape(data.data))
+        data.sum().plot()
         plt.show()
 
     def test_celeritas_lazy(self):

@@ -95,8 +95,8 @@ class SeqReader(object):
                                 (("ImageBitDepth"), ("<u4")),
                                 (("ImageBitDepthReal"), ("<u4"))]
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
-            self.image_dict['ImageWidth'] = image_info[0]
-            self.image_dict['ImageHeight'] = int(image_info[1] / 64)
+            self.image_dict['ImageWidth'] = int(image_info[0]/2)
+            self.image_dict['ImageHeight'] = int(image_info[1] / 8)
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[1]
@@ -117,8 +117,8 @@ class SeqReader(object):
             self.image_dict["FPS"] = struct.unpack('<d', read_bytes)[0]
             self.dtype_full_list = [(("Array"),
                                     self.image_dict["ImageBitDepth"],
-                                    (self.image_dict["ImageWidth"],
-                                     self.image_dict["ImageHeight"]*2))]
+                                    (self.image_dict["ImageWidth"]*2,
+                                     self.image_dict["ImageHeight"]))]
             self.dtype_split_list = [(("Array"),
                                     self.image_dict["ImageBitDepth"],
                                     (self.image_dict["ImageWidth"],
@@ -203,7 +203,7 @@ class SeqReader(object):
                 else:
                     t = np.fromfile(top, self.dtype_split_list, count=1)
                     b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((t["Array"][0], b["Array"][0]), axis=1)
+                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
                     new_d = np.empty(1, dtype=self.dtype_full_list)
                     new_d["Array"] = d
                     data[i] = new_d
