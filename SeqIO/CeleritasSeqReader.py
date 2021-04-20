@@ -164,6 +164,7 @@ class SeqReader(object):
                      'navigate': False, 'index_in_array': 1})
         axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"]*2,
                         'navigate': False, 'index_in_array': 2})
+        print(axes)
         print(self.metadata_dict != {})
         if self.metadata_dict != {} and self.metadata_dict["PixelSize"] != 0:
             # need to still determine a way to properly set units and scale
