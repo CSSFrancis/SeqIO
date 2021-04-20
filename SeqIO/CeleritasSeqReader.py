@@ -94,10 +94,9 @@ class SeqReader(object):
                                 (("ImageHeight"), ("<u4")),
                                 (("ImageBitDepth"), ("<u4")),
                                 (("ImageBitDepthReal"), ("<u4"))]
-            print(image_info_dtype)
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
             self.image_dict['ImageWidth'] = image_info[0]
-            self.image_dict['ImageHeight'] = int(image_info[1] / 16)
+            self.image_dict['ImageHeight'] = int(image_info[0] / 2)  # What is happening here
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[1]
@@ -239,7 +238,6 @@ class SeqReader(object):
                     new_d = np.empty(1, dtype=self.dtype_full_list)
                     new_d["Array"] = d
                     data[i] = new_d
-        print(data)
         return data["Array"]
 
     def read_data(self, lazy=False, chunks=None, nav_shape=None):

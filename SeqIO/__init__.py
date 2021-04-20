@@ -22,6 +22,7 @@ def load(filename=None,lazy=False, chunks=None, nav_shape=None, parameters=None)
                                   nav_shape=nav_shape),
                       lazy=lazy)
     return sig
+
 def load_celeritas(top,
                    bottom,
                    dark=None,
@@ -44,6 +45,9 @@ def load_celeritas(top,
     """
     sig = dict2signal(c_reader(top=top,
                                bottom=bottom,
+                               gain=gain,
+                               dark=dark,
+                               metadata=metadata,
                                lazy=lazy,
                                chunks=chunks,
                                nav_shape=nav_shape),
