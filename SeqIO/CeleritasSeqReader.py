@@ -160,9 +160,9 @@ class SeqReader(object):
             for i, s in enumerate(nav_shape):
                 axes.append({'name': nav_names[i], 'offset': 0, 'scale': 1, 'size': s,
                              'navigate': True, 'index_in_array': 0})
-        axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"]*2,
+        axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"],
                      'navigate': False, 'index_in_array': 1})
-        axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"],
+        axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"]*2,
                         'navigate': False, 'index_in_array': 2})
         print(self.metadata_dict != {})
         if self.metadata_dict != {} and self.metadata_dict["PixelSize"] != 0:
