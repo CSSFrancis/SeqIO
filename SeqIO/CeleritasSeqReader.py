@@ -110,7 +110,8 @@ class SeqReader(object):
 
             file.seek(580)
             read_bytes = file.read(4)
-            self.image_dict["ImgBytes"] = struct.unpack('<L', read_bytes[0:4])[0]
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/8)
+            print(self.image_dict["ImgBytes"])
 
             file.seek(584)
             read_bytes = file.read(8)
