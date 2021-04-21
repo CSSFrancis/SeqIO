@@ -221,24 +221,18 @@ class SeqReader(object):
                 start =im_start*self.image_dict["ImgBytes"]
                 top.seek(8192+start + i * self.image_dict["ImgBytes"])
                 bottom.seek(8192+start + i * self.image_dict["ImgBytes"])
-                if self.dark_ref is not None and self.gain_ref is not None:
-                    t = np.fromfile(top, self.dtype_split_list, count=1)
-                    b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((np.flip(t["Array"][0], axis=0), b["Array"][0]), axis=0)
+                t = np.fromfile(top, self.dtype_split_list, count=1)
+                b = np.fromfile(bottom, self.dtype_split_list, count=1)
+                d = np.concatenate((np.flip(t["Array"][0], axis=0), b["Array"][0]), axis=0)
+                if self.dark_ref is not None:
                     d = (d - self.dark_ref)
                     d[d > max_pix] = 0
+                if self.gain_ref is not None:
                     d = d * self.gain_ref  # Numpy doesn't check for overflow.
                     # There might be a better way to do this. OpenCV has a method for subtracting
-                    new_d = np.empty(1, dtype=self.dtype_full_list)
-                    new_d["Array"] = d
-                    data[i] = new_d
-                else:
-                    t = np.fromfile(top, self.dtype_split_list, count=1)
-                    b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
-                    new_d = np.empty(1, dtype=self.dtype_full_list)
-                    new_d["Array"] = d
-                    data[i] = new_d
+                new_d = np.empty(1, dtype=self.dtype_full_list)
+                new_d["Array"] = d
+                data[i] = new_d
         return data["Array"]
 
     def read_data(self, lazy=False, chunks=None, nav_shape=None):
