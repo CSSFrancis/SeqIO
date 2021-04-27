@@ -103,14 +103,11 @@ class SeqReader(object):
             _logger.info('Each frame is %i x %i pixels', (image_info[0], image_info[1]))
             file.seek(572)
             print(self.image_dict)
-            read_bytes = file.read(4)
-            self.image_dict["NumFrames"] = struct.unpack('<i', read_bytes)[0]*64
-            _logger.info('%i number of frames found', self.image_dict["NumFrames"])
-            print(self.image_dict["NumFrames"])
-
             file.seek(580)
             read_bytes = file.read(4)
             self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
+            self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
+            _logger.info('%i number of frames found', self.image_dict["NumFrames"])
 
             file.seek(584)
             read_bytes = file.read(8)
