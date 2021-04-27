@@ -105,7 +105,13 @@ class SeqReader(object):
             print(self.image_dict)
             file.seek(580)
             read_bytes = file.read(4)
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
+            if self.image_dict["ImageHeight"] == 512:
+                factor = 16
+            elif self.image_dict["ImageHeight"] == 256:
+                factor = 32
+            else:
+                factor = 8
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/factor)
             self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
 
