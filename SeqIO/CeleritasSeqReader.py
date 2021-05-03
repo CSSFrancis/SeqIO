@@ -20,6 +20,8 @@ import numpy as np
 from hyperspy.docstrings.signal import OPTIMIZE_ARG
 import struct
 
+import xmltodict
+
 
 _logger = logging.getLogger(__name__)
 
@@ -29,7 +31,13 @@ data_types = {8: np.uint8, 16: np.uint16, 32: np.uint32}  # Stream Pix data type
 class SeqReader(object):
     """ Class to read .seq files. File format from StreamPix and Output for Direct Electron Cameras
     """
-    def __init__(self, top=None, bottom=None, dark=None, gain=None, metadata=None):
+    def __init__(self,
+                 top=None,
+                 bottom=None,
+                 dark=None,
+                 gain=None,
+                 metadata=None,
+                 xml_file=None):
         self.top = top
         self.bottom = bottom
         self.metadata_dict = {}
@@ -37,9 +45,12 @@ class SeqReader(object):
         self.image_dict = {}
         self.dark_file = dark
         self.gain_file = gain
+        self.xml_file = xml_file
         self.metadata_file = metadata
         self.dark_ref = None
         self.gain_ref = None
+        self.xml_metadata={}
+        self.segment_prebuffer=None
         self.image_dtype_full_list = None
         self.image_dtype_split_list = None
 
@@ -59,7 +70,7 @@ class SeqReader(object):
                 self.dark_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"]*2,
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
                                                                      self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])
         except FileNotFoundError:
@@ -80,12 +91,29 @@ class SeqReader(object):
                 self.gain_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"]*2,
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
                                                                      self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
         except FileNotFoundError:
             print("No gain reference image found.  The Gain reference should be in the same directory "
                   "as the image and have the form xxx.seq.gain.mrc")
+
+    def _get_xml_file(self):
+        if self.xml_file is None:
+            print("No xml file is given. While the program might still run it is important to have "
+                  "and xml file.  At faster FPS the XML file will contain information necessary to"
+                  "properly load the images")
+            return
+        with open(self.xml_file, "r") as file:
+            dict = xmltodict.parse(file.read())
+            file_info = dict["Configuration"]["FileInfo"]
+            for key in file_info:
+                file_info[key] = file_info[key]["@Value"]
+            self.segment_prebuffer = int(file_info["SegmentPreBuffer"])  # divide frames by this
+            self.image_dict["NumFrames"] = int(file_info["TotalFrames"])
+            self.xml_metadata = file_info
+            return
+
 
     def parse_header(self):
         with open(self.top, mode='rb') as file:  # b is important -> binary
@@ -95,24 +123,29 @@ class SeqReader(object):
                                 (("ImageBitDepth"), ("<u4")),
                                 (("ImageBitDepthReal"), ("<u4"))]
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
-            self.image_dict['ImageWidth'] = int(image_info[0]/2)
+            self.image_dict['ImageWidth'] = int(image_info[0])
             self.image_dict['ImageHeight'] = int(image_info[0])
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
-            self.image_dict["FrameLength"] = image_info[0] * image_info[1]
-            _logger.info('Each frame is %i x %i pixels', (image_info[0], image_info[1]))
+            self.image_dict["FrameLength"] = image_info[0] * image_info[0]
+            _logger.info('Each frame is %i x %i pixels', (image_info[0], image_info[0]))
             file.seek(572)
             print(self.image_dict)
             file.seek(580)
             read_bytes = file.read(4)
-            if self.image_dict["ImageHeight"] == 512:
-                factor = 16
-            elif self.image_dict["ImageHeight"] == 256:
-                factor = 64
-            else:
-                factor = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/factor)
-            self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
+            if self.segment_prebuffer is None:
+                print("Trying to guess the segment pre-factor... Please Load XML File to help")
+                # try to guess it?
+                if self.image_dict["ImageHeight"] == 512:
+                    self.segment_prebuffer = 16
+                elif self.image_dict["ImageHeight"] == 256:
+                    self.segment_prebuffer = 64
+                else:
+                    self.segment_prebuffer = 4
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer)
+            if "NumFrames" not in self.image_dict:
+                print("Guessing the number of frames")
+                self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
 
             file.seek(584)
@@ -120,11 +153,11 @@ class SeqReader(object):
             self.image_dict["FPS"] = struct.unpack('<d', read_bytes)[0]
             self.dtype_full_list = [(("Array"),
                                     self.image_dict["ImageBitDepth"],
-                                    (self.image_dict["ImageWidth"]*2,
+                                    (self.image_dict["ImageWidth"],
                                      self.image_dict["ImageHeight"]))]
             self.dtype_split_list = [(("Array"),
                                     self.image_dict["ImageBitDepth"],
-                                    (self.image_dict["ImageWidth"],
+                                    (int(self.image_dict["ImageWidth"]/2),
                                      self.image_dict["ImageHeight"]))]
         return
 
@@ -133,7 +166,7 @@ class SeqReader(object):
         if self.metadata_file is None:
             return
         try:
-            with open(self.file + ".metadata", 'rb') as meta:
+            with open(self.metadata_file, 'rb') as meta:
                 meta.seek(320)
                 image_info_dtype = [(("SensorGain"), (np.float64)),
                                     (("Magnification"), (np.float64)),
@@ -252,7 +285,7 @@ class SeqReader(object):
             val = [delayed(self.get_single_image_data, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
-                                        self.image_dict["ImageWidth"]*2,
+                                        self.image_dict["ImageWidth"],
                                         self.image_dict["ImageHeight"]),
                                  dtype=self.image_dict["ImageBitDepth"])
                     for chunk_size, v in zip(chunk, val)]
@@ -260,7 +293,7 @@ class SeqReader(object):
         else:
             data = self.get_image_data()
         if nav_shape is not None:
-            shape = list(nav_shape) + [self.image_dict["ImageWidth"]*2, self.image_dict["ImageHeight"]]
+            shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]]
             data = np.reshape(data, shape)
         return data
 
@@ -270,25 +303,44 @@ def file_reader(top=None,
                 dark=None,
                 gain=None,
                 metadata=None,
+                xml_file=None,
                 lazy=False,
                 nav_shape=None, chunks=10):
     """Reads a .seq file.
 
     Parameters
     ----------
-    filename: str
-        The filename to be loaded
     lazy : bool, default False
         Load the signal lazily.
+    top : str
+        The filename for the top part of the detector
+    bottom:
+        The filename for the bottom part of the detector
+    dark: str
+        The filename for the dark reference to be applied to the data
+    gain: str
+        The filename for the gain reference to be applied to the data
+    metadata: str
+        The filename for the metadata file
+    xml_file: str
+        The filename for the xml file to be applied.
+    nav_shape:
+        The navigation shape for the dataset to be divided into to
+    chunks:
+        If lazy=True this divides the dataset into this many chunks
     """
-    seq = SeqReader(top, bottom, dark, gain, metadata)
+    seq = SeqReader(top,
+                    bottom,
+                    dark,
+                    gain,
+                    metadata,
+                    xml_file)
+    seq._get_xml_file()
     seq.parse_header()
     seq._get_dark_ref()
     seq._get_gain_ref()
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
-    print(axes)
-    print(chunks)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
     dictionary = {
