@@ -227,7 +227,7 @@ class SeqReader(object):
             data = np.empty(self.image_dict["NumFrames"], dtype=self.dtype_full_list)  # creating an empty array
             max_pix = 2 ** 12
             for i in range(self.image_dict["NumFrames"]):
-                group = np.true_divide(i, self.segment_prebuffer)
+                group = int(np.true_divide(i, self.segment_prebuffer))
                 top.seek(8192 + group*self.image_dict["GroupingBytes"] +
                          int(i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
                 bottom.seek(8192 + group*self.image_dict["GroupingBytes"] +
