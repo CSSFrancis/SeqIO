@@ -144,7 +144,7 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer+2)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer-128)
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
