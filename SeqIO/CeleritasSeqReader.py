@@ -311,7 +311,7 @@ class SeqReader(object):
         else:
             data = self.get_image_data()
         if nav_shape is not None:
-            shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]]
+            shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]*2]
             data = np.reshape(data, shape)
         return data
 
