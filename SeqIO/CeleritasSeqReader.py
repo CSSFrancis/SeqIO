@@ -71,7 +71,7 @@ class SeqReader(object):
                     np.round(
                         np.reshape(
                             np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]))),
+                                                                     self.image_dict["ImageHeight"]*2))),
                     dtype=self.image_dict["ImageBitDepth"])
         except FileNotFoundError:
             print("No Dark Reference image found.  The Dark reference should be in the same directory "
@@ -92,7 +92,7 @@ class SeqReader(object):
                     np.round(
                         np.reshape(
                             np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]))),
+                                                                     self.image_dict["ImageHeight"]*2))),
                     dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
         except FileNotFoundError:
             print("No gain reference image found.  The Gain reference should be in the same directory "
@@ -124,7 +124,8 @@ class SeqReader(object):
                                 (("ImageBitDepthReal"), ("<u4"))]
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
             self.image_dict['ImageWidth'] = int(image_info[0])
-            self.image_dict['ImageHeight'] = int(image_info[0])
+            self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
+            print(self.image_dict["ImageHeight"])
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[0]
@@ -142,7 +143,7 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer/2)
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
@@ -153,12 +154,12 @@ class SeqReader(object):
             self.image_dict["FPS"] = struct.unpack('<d', read_bytes)[0]
             self.dtype_full_list = [(("Array"),
                                     self.image_dict["ImageBitDepth"],
-                                    (self.image_dict["ImageWidth"],
-                                     self.image_dict["ImageHeight"]))]
+                                    (int(self.image_dict["ImageHeight"]*2),
+                                     self.image_dict["ImageWidth"]))]
             self.dtype_split_list = [(("Array"),
-                                    self.image_dict["ImageBitDepth"],
-                                    (int(self.image_dict["ImageWidth"]/2),
-                                     self.image_dict["ImageHeight"]))]
+                                     self.image_dict["ImageBitDepth"],
+                                     (self.image_dict["ImageHeight"],
+                                     self.image_dict["ImageWidth"]))]
         return
 
     def parse_metadata_file(self):
@@ -343,10 +344,12 @@ def file_reader(top=None,
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
+    print(seq.image_dict)
     dictionary = {
         'data': data,
         'metadata': metadata,
         'axes': axes,
-        'original_metadata': metadata,}
+        'original_metadata': metadata,
+    }
 
     return dictionary
