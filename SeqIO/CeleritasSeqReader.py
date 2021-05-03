@@ -229,9 +229,9 @@ class SeqReader(object):
             for i in range(self.image_dict["NumFrames"]):
                 group = np.true_divide(i, self.segment_prebuffer)
                 top.seek(8192 + group*self.image_dict["GroupingBytes"] +
-                         (i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
+                         int(i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
                 bottom.seek(8192 + group*self.image_dict["GroupingBytes"] +
-                         (i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
+                         int(i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
                 if self.dark_ref is not None and self.gain_ref is not None:
                     t = np.fromfile(top,
                                     self.dtype_split_list,
