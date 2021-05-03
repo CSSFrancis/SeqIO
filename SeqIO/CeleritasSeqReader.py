@@ -124,6 +124,7 @@ class SeqReader(object):
                                 (("ImageBitDepthReal"), ("<u4"))]
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
             self.image_dict['ImageWidth'] = int(image_info[0])
+            self.image_dict['ImageWidth'] = int(image_info[0])
             self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
             print(self.image_dict["ImageHeight"])
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
@@ -197,9 +198,9 @@ class SeqReader(object):
             for i, s in enumerate(nav_shape):
                 axes.append({'name': nav_names[i], 'offset': 0, 'scale': 1, 'size': s,
                              'navigate': True, 'index_in_array': 0})
-        axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"],
+        axes.append({'name': 'ky', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageHeight"]*2,
                      'navigate': False, 'index_in_array': 1})
-        axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"]*2,
+        axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"],
                         'navigate': False, 'index_in_array': 2})
         print(axes)
         print(self.metadata_dict != {})
@@ -228,9 +229,16 @@ class SeqReader(object):
                 top.seek(8192 + i * self.image_dict["ImgBytes"])
                 bottom.seek(8192 + i * self.image_dict["ImgBytes"])
                 if self.dark_ref is not None and self.gain_ref is not None:
-                    t = np.fromfile(top, self.dtype_split_list, count=1)
-                    b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
+                    t = np.fromfile(top,
+                                    self.dtype_split_list,
+                                    count=1)
+                    b = np.fromfile(bottom,
+                                    self.dtype_split_list,
+                                    count=1)
+                    d = np.concatenate((np.flip(t["Array"][0],
+                                                axis=0),
+                                        b["Array"][0]),
+                                       axis=0)
                     d = (d - self.dark_ref)
                     d[d > max_pix] = 0
                     d = d * self.gain_ref  # Numpy doesn't check for overflow.
@@ -239,9 +247,16 @@ class SeqReader(object):
                     new_d["Array"] = d
                     data[i] = new_d
                 else:
-                    t = np.fromfile(top, self.dtype_split_list, count=1)
-                    b = np.fromfile(bottom, self.dtype_split_list, count=1)
-                    d = np.concatenate((np.flip(t["Array"][0],axis=0),b["Array"][0]), axis=0)
+                    t = np.fromfile(top,
+                                    self.dtype_split_list,
+                                    count=1)
+                    b = np.fromfile(bottom,
+                                    self.dtype_split_list,
+                                    count=1)
+                    d = np.concatenate((np.flip(t["Array"][0],
+                                                axis=0),
+                                        b["Array"][0]),
+                                       axis=0)
                     new_d = np.empty(1, dtype=self.dtype_full_list)
                     new_d["Array"] = d
                     data[i] = new_d
