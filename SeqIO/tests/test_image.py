@@ -38,13 +38,7 @@ class Test4D:
                                     metadata='/media/hdd/home/1000FPS SS7 200x200/metadata.metadata',
                                     lazy=True,
                                     chunks=100)
-        print(np.shape(data.data))
-        data.compute()
-        data.plot()
-        plt.show()
-        data.sum().plot()
-        plt.show()
-        print(data.data.shape)
+        print(data)
 
     def test_read_xml(self):
         test1 = SeqReader(xml_file='/media/hdd/home/1000FPS SS7 200x200/1000FPS_SS7_200x200.seq.Config.Metadata.xml.Config.Metadata.xml.Config.Metadata.xml.Config.Metadata.xml')

@@ -304,7 +304,7 @@ class SeqReader(object):
             data = [from_delayed(v,
                                  shape=(chunk_size,
                                         self.image_dict["ImageWidth"],
-                                        self.image_dict["ImageHeight"]),
+                                        self.image_dict["ImageHeight"]*2),
                                  dtype=self.image_dict["ImageBitDepth"])
                     for chunk_size, v in zip(chunk, val)]
             data = concatenate(data, axis=0)
@@ -362,6 +362,7 @@ def file_reader(top=None,
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
     print(seq.image_dict)
+    print(axes)
     dictionary = {
         'data': data,
         'metadata': metadata,
