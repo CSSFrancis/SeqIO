@@ -144,7 +144,7 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer/2)
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
@@ -353,6 +353,7 @@ def file_reader(top=None,
                     gain,
                     metadata,
                     xml_file)
+
     seq._get_xml_file()
     seq.parse_header()
     seq._get_dark_ref()
@@ -360,6 +361,7 @@ def file_reader(top=None,
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
+    print("num bytes", seq.image_dict["ImgBytes"])
     data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
     print(seq.image_dict)
     print(axes)
