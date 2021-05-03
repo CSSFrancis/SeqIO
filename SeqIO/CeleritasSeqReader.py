@@ -205,7 +205,7 @@ class SeqReader(object):
                         'navigate': False, 'index_in_array': 2})
         print(axes)
         print(self.metadata_dict != {})
-        if self.metadata_dict != {} and self.metadata_dict["PixelSize"] != 0:
+        if self.metadata_dict != {} and self.metadata_dict["PixelSize"] > 1e-30:
             # need to still determine a way to properly set units and scale
             axes[-2]['scale'] = self.metadata_dict["PixelSize"]
             axes[-1]['scale'] = self.metadata_dict["PixelSize"]
@@ -219,6 +219,8 @@ class SeqReader(object):
             metadata['Acquisition_instrument'] = {'TEM':
                                                       {'camera_length': self.metadata_dict["CameraLength"],
                                                        'magnification': self.metadata_dict["Magnification"]}}
+        if self.image_dict != {}:
+            metadata['Acquisition_instrument']["TEM"]["ImageData"] = self.xml_metadata
         return metadata
 
     def get_image_data(self):
@@ -267,8 +269,8 @@ class SeqReader(object):
                 top.seek(8192 +
                          group*self.image_dict["GroupingBytes"] +
                          rem * self.image_dict["ImgBytes"])
-                bottom.seek(8192+
-                         group*self.image_dict["GroupingBytes"] +
+                bottom.seek(8192 +
+                         group * self.image_dict["GroupingBytes"] +
                          rem * self.image_dict["ImgBytes"])
                 t = np.fromfile(top,
                                 self.dtype_split_list,
