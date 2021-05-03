@@ -144,7 +144,7 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer/2)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer)
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
@@ -267,7 +267,9 @@ class SeqReader(object):
     def get_single_image_data(self, im_start, chunk_size):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
-            data = np.empty(chunk_size, dtype=self.dtype_full_list)  # creating an empty array
+            print("DtypeFull", self.dtype_full_list)
+            data = np.empty(chunk_size,
+                            dtype=self.dtype_full_list)  # creating an empty array
             max_pix = 2**12
             for i in range(chunk_size):
                 start =im_start*self.image_dict["ImgBytes"]
