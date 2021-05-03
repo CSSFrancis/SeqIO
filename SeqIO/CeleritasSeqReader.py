@@ -144,7 +144,8 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer+128)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer-128)
+            self.image_dict["GroupingBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
@@ -226,8 +227,11 @@ class SeqReader(object):
             data = np.empty(self.image_dict["NumFrames"], dtype=self.dtype_full_list)  # creating an empty array
             max_pix = 2 ** 12
             for i in range(self.image_dict["NumFrames"]):
-                top.seek(8192 + i * self.image_dict["ImgBytes"])
-                bottom.seek(8192 + i * self.image_dict["ImgBytes"])
+                group = np.true_divide(i, self.segment_prebuffer)
+                top.seek(8192 + group*self.image_dict["GroupingBytes"] +
+                         (i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
+                bottom.seek(8192 + group*self.image_dict["GroupingBytes"] +
+                         (i-group*self.segment_prebuffer) * self.image_dict["ImgBytes"])
                 if self.dark_ref is not None and self.gain_ref is not None:
                     t = np.fromfile(top,
                                     self.dtype_split_list,
