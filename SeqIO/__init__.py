@@ -40,9 +40,24 @@ def load_celeritas(top,
 
     Parameters
     -----------
-    filename: str
-        The name of the file to be loaded (.seq file)
-
+    lazy : bool, default False
+        Load the signal lazily.
+    top : str
+        The filename for the top part of the detector
+    bottom:
+        The filename for the bottom part of the detector
+    dark: str
+        The filename for the dark reference to be applied to the data
+    gain: str
+        The filename for the gain reference to be applied to the data
+    metadata: str
+        The filename for the metadata file
+    xml_file: str
+        The filename for the xml file to be applied.
+    nav_shape:
+        The navigation shape for the dataset to be divided into to
+    chunks:
+        If lazy=True this divides the dataset into this many chunks
     """
     sig = dict2signal(c_reader(top=top,
                                bottom=bottom,

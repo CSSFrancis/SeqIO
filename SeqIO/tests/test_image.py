@@ -22,6 +22,7 @@ class Test4D:
         data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True, chunks=4, nav_shape=(4, 5))
         print(data)
         assert isinstance(data, LazySignal2D)
+
     def test_celeritas(self):
         import numpy as np
         data = SeqIO.load_celeritas(top='/media/hdd/home/PtNW_100fps_Top_16-32-11.473.seq',
@@ -31,7 +32,6 @@ class Test4D:
         plt.show()
 
     def test_celeritas_lazy(self):
-        import numpy as np
         data = SeqIO.load_celeritas(top='/media/hdd/home/1000FPS SS7 200x200/top.seq',
                                     bottom='/media/hdd/home/1000FPS SS7 200x200/bottom.seq',
                                     xml_file='/media/hdd/home/1000FPS SS7 200x200/metadata.xml',
@@ -41,6 +41,9 @@ class Test4D:
         print(data)
         print(data.metadata)
         print(data.axes_manager)
+        data.compute()
+        data.plot()
+
     def test_read_xml(self):
         test1 = SeqReader(xml_file='/media/hdd/home/1000FPS SS7 200x200/1000FPS_SS7_200x200.seq.Config.Metadata.xml.Config.Metadata.xml.Config.Metadata.xml.Config.Metadata.xml')
         test1._get_xml_file()

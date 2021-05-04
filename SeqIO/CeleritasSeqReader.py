@@ -124,31 +124,29 @@ class SeqReader(object):
                                 (("ImageBitDepthReal"), ("<u4"))]
             image_info = np.fromfile(file, image_info_dtype, count=1)[0]
             self.image_dict['ImageWidth'] = int(image_info[0])
-            self.image_dict['ImageWidth'] = int(image_info[0])
-            self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
-            print(self.image_dict["ImageHeight"])
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[0]
             _logger.info('Each frame is %i x %i pixels', (image_info[0], image_info[0]))
             file.seek(572)
-            print(self.image_dict)
             file.seek(580)
             read_bytes = file.read(4)
             if self.segment_prebuffer is None:
-                print("Trying to guess the segment pre-factor... Please Load XML File to help")
+                print("Trying to guess the segment pre-factor... Please load .xml File to help")
                 # try to guess it?
-                if self.image_dict["ImageHeight"] == 512:
+                if self.image_dict["ImageWidth"] == 512:
                     self.segment_prebuffer = 16
-                elif self.image_dict["ImageHeight"] == 256:
+                elif self.image_dict["ImageWidth"] == 256:
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
+            self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
             self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer-128)
             self.image_dict["GroupingBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
-                self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192)/self.image_dict["ImgBytes"])
+                self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192) /
+                                                   (self.image_dict["GroupingBytes"]/self.segment_prebuffer))
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
 
             file.seek(584)
@@ -203,8 +201,6 @@ class SeqReader(object):
                      'navigate': False, 'index_in_array': 1})
         axes.append({'name': 'kx', 'offset': 0, 'scale': 1, 'size': self.image_dict["ImageWidth"],
                         'navigate': False, 'index_in_array': 2})
-        print(axes)
-        print(self.metadata_dict != {})
         if self.metadata_dict != {} and self.metadata_dict["PixelSize"] > 1e-30:
             # need to still determine a way to properly set units and scale
             axes[-2]['scale'] = self.metadata_dict["PixelSize"]
@@ -219,8 +215,8 @@ class SeqReader(object):
             metadata['Acquisition_instrument'] = {'TEM':
                                                       {'camera_length': self.metadata_dict["CameraLength"],
                                                        'magnification': self.metadata_dict["Magnification"]}}
-        if self.image_dict != {}:
-            metadata['Acquisition_instrument']["TEM"]["ImageData"] = self.xml_metadata
+        if self.xml_metadata != {}:
+            metadata['General']["ImageData"] = self.xml_metadata
         return metadata
 
     def get_image_data(self):
@@ -259,7 +255,6 @@ class SeqReader(object):
     def get_single_image_data(self, im_start, chunk_size):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
-            print("DtypeFull", self.dtype_full_list)
             data = np.empty(chunk_size,
                             dtype=self.dtype_full_list)  # creating an empty array
             max_pix = 2**12
@@ -361,10 +356,7 @@ def file_reader(top=None,
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
-    print("num bytes", seq.image_dict["ImgBytes"])
     data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
-    print(seq.image_dict)
-    print(axes)
     dictionary = {
         'data': data,
         'metadata': metadata,

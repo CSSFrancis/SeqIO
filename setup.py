@@ -27,7 +27,7 @@ setup(
         "ipywidgets",
         "numba",
         "orix >= 0.3",
-        "pyxem",
+        "pyxem ",
         "xmltodict"
     ],
     packages=['SeqIO'],
