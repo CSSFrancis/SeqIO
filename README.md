@@ -6,7 +6,7 @@ signals (time, x, y), 4d Signals (x,y,kx,ky) and 5d signals (x,y,t,kx,ky).
 It reads the metadata given to Streampix but additional effort to caputure micropsope set up etc will be an additional focus as time goes on.  Working with the scan
 software will also be useful.
 
-To download the package you can either clone the repo or the package is hosted on PyPi: so running `pip install seqio` will install the package.
+To download the package you can either clone the repo or the package is hosted on PyPi: so running `pip install seq-io` will install the package.
 
 From there 
 
