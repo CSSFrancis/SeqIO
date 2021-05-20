@@ -114,7 +114,7 @@ if __name__ == '__main__':
         try:
             import cupy as cp
             CUPY_INSTALLED = True
-            gpu_mem = cupy.cuda.runtime.getDeviceProperties(0)["totalGlobalMem"]
+            gpu_mem = cp.cuda.runtime.getDeviceProperties(0)["totalGlobalMem"]
             chunksize = gpu_mem/100
             print("The available Memory for each GPU is: ", gpu_mem/1000000000, "Gb")
             print("Each chunk is: ", chunksize / 1000000000, "Gb")
