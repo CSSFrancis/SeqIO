@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
         counted = data.map_blocks(_counting_filter_gpu,
                                   threshold=args.threshold,
-                                  integrate=args.inegrate,
+                                  integrate=args.integrate,
                                   hdr_mask=cupy.asarray(hdr),
                                   method="maximum",
                                   mean_electron_val=args.mean_e,
