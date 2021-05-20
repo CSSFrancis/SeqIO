@@ -150,9 +150,8 @@ def _counting_filter_gpu(image,
         else:
             struct = cupy.asarray([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
-
         all_labels, num = clabel(conv, structure=struct)  # get blobs
-        print(num)
+        print("Number of Electrons per chunk:", num)
         del conv  # Cleaning up GPU Memory
         del kern  # Cleaning up GPU Memory
 

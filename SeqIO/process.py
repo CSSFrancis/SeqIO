@@ -199,7 +199,7 @@ if __name__ == '__main__':
     sig.save(args.directory + ".hspy", compression=False)
     tock = time.time()
     print("Total time elapsed : ", tock-tick, " sec")
-    print("Time per frame: ",  tock-tick/reader.image_dict["NumFrames"], "sec")
+    print("Time per frame: ",  (tock-tick)/reader.image_dict["NumFrames"], "sec")
 
 
 
