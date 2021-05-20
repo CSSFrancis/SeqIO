@@ -9,9 +9,9 @@ try:
     import cupy
     from cupyx.scipy.ndimage import label as clabel
     from cupyx.scipy.ndimage import sum as csum_labels
-    from cupyx.scipy.ndimage import ccenter_of_mass, cmaximum_position
-    from cupyx.scipy.signal import cfftconvolve
-    import cupy
+    from cupyx.scipy.ndimage import center_of_mass as ccenter_of_mass
+    from cupyx.scipy.ndimage import maximum_position as cmaximum_position
+    from cupyx.scipy.signal import fftconvolve as cfftconvolve
 except ImportError:
     print("Cupy is not installed.  No GPU operations are possible")
 
