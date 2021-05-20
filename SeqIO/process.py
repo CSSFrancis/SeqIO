@@ -140,10 +140,10 @@ if __name__ == '__main__':
             nonlinear = (temp_sum < 3) > 0.05  # 95% Sparse data only
             print()
             hs.signals.Signal2D(hdr).save(args.directory+"hdr_mask.hspy",
-                                          compression=False)
+                                          compression=False, overwrite=True)
             print()
             hs.signals.Signal2D(nonlinear).save(args.directory + "nonlinear_mask.hspy",
-                                                compression=False)
+                                                compression=False, overwrite=True)
     else:
         hdr = None
 
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     }
     sig = dict2signal(dictionary, lazy=True)
     print("Saving... ")
-    sig.save(args.directory + ".hspy", compression=False)
+    sig.save(args.directory + ".hspy", compression=False, overwrite=True)
     tock = time.time()
     print("Total time elapsed : ", tock-tick, " sec")
     print("Time per frame: ",  (tock-tick)/reader.image_dict["NumFrames"], "sec")
