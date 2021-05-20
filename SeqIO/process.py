@@ -124,8 +124,8 @@ if __name__ == '__main__':
             print("Cupy Must be installed to use GPU Processing.... ")
             print("Using CPU Processing instead")
     if not args.gpu:
-        chunksize = 50000000
-        print("Each chunk is: ", chunksize / 500000000, "Gb")
+        chunksize = 100000000
+        print("Each chunk is: ", chunksize / 1000000000, "Gb")
 
     if args.hdr:
         #If HDR should be calculated and output as a mask
