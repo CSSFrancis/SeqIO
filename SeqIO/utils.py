@@ -1,3 +1,5 @@
+import time
+
 from scipy.ndimage import label
 from scipy.ndimage import center_of_mass, maximum_position
 from scipy.ndimage import sum_labels
@@ -30,6 +32,7 @@ def _counting_filter_cpu(image,
     It also allows for you to integrate the electron events rather than counting
     them.
     """
+    tick = time.time()
     try:
         if hdr_mask is not None and integrate is False:
             hdr_img = image * hdr_mask
@@ -98,6 +101,8 @@ def _counting_filter_cpu(image,
                 x[:, hdr_mask] = hdr_img[:, hdr_mask]
             else:
                 image[hdr_mask] = hdr_img[hdr_mask]
+        tock = time.time()
+        print("Time elapsed for one Chunk", tock-tick, "seconds")
         return x
     except MemoryError:
         print("Failed....  Memory Error")
