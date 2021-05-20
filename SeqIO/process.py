@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     print("Input Dataset:", data)
     if args.gpu:
-        data = cupy.asarray(data)
+        data = data.map_blocks(cupy.asarray)
 
         counted = data.map_blocks(_counting_filter_gpu,
                                   threshold=args.threshold,
@@ -181,9 +181,9 @@ if __name__ == '__main__':
         new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
         print("The output data Shape: ", new_shape)
         counted = np.reshape(counted, new_shape)
-        test_size =1
+        test_size = 1
         for i in new_shape:
-            test_size=test_size*i
+            test_size = test_size*i
         axes = reader.create_axes(nav_shape=list(args.nav_shape))
     else:
         axes = reader.create_axes()
