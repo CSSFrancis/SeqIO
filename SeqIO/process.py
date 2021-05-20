@@ -79,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument("-g",
                         "--gpu",
                         type=bool,
-                        default=True,
+                        default=False,
                         help="Use GPU for Counting")
     parser.add_argument("-ns",
                         "--nav_shape",
