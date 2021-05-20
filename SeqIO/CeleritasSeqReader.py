@@ -22,7 +22,6 @@ import struct
 
 import xmltodict
 
-
 _logger = logging.getLogger(__name__)
 
 data_types = {8: np.uint8, 16: np.uint16, 32: np.uint32}  # Stream Pix data types
@@ -187,7 +186,7 @@ class SeqReader(object):
 
         return
 
-    def create_axes(self, nav_shape=None, nav_names=["x","y","time"]):
+    def create_axes(self, nav_shape=None, nav_names=["x", "y", "time"]):
         axes = []
         if nav_shape is None:
             axes.append({'name':'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
@@ -251,8 +250,7 @@ class SeqReader(object):
                 data[i] = new_d
         return data["Array"]
 
-
-    def get_single_image_data(self, im_start, chunk_size):
+    def get_image_chunk(self, im_start, chunk_size):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
             data = np.empty(chunk_size,
@@ -285,17 +283,21 @@ class SeqReader(object):
                 data[i] = new_d
         return data["Array"]
 
-    def read_data(self, lazy=False, chunks=None, nav_shape=None):
+    def read_data(self, lazy=False, chunks=None, chunksize=None, nav_shape=None):
         if lazy:
-            if chunks is None:
-                chunks =10
+            if chunks is None and chunksize is not None:
+                chunks = int(self.image_dict["NumFrames"]/np.ceil(chunksize/(self.image_dict["ImageWidth"] *
+                                self.image_dict["ImageHeight"]*4))) #16 bit image (2 bytes)
+                print("num of Chunks:", chunks)
+            elif chunks is None and chunksize is None:
+                chunks = 10
             from dask import delayed
             from dask.array import from_delayed
             from dask.array import concatenate
             per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
             extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
             chunk = [per_chunk]*(chunks-1) + [extra]
-            val = [delayed(self.get_single_image_data, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
+            val = [delayed(self.get_image_chunk, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
                                         self.image_dict["ImageWidth"],

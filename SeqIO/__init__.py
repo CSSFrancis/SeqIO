@@ -2,7 +2,36 @@ from SeqIO.SeqReader import file_reader
 from SeqIO.CeleritasSeqReader import file_reader as c_reader
 from hyperspy._signals.signal2d import Signal2D
 from hyperspy.io import dict2signal
+import glob
 
+
+
+
+def load_folder(folder,
+                lazy=False,
+                chunks=None,
+                nav_shape=None,
+                parameters=None):
+    top = glob.glob(folder+"*Top*.seq")
+    bottom = glob.glob(folder+"*Bottom*.seq")
+    seq =  glob.glob(folder+"*.seq")
+    gain = glob.glob(folder+"*gain*.mrc")
+    dark = glob.glob(folder+"*dark*.mrc")
+    xml = glob.glob(folder+"*.xml")
+    meta = glob.glob(folder+"*.metadata")
+    if len(top) == 0 and len(bottom) == 0:
+        s = load(seq[0], lazy=lazy)
+    else:
+        s = load_celeritas(top=top[0],
+                           bottom=bottom[0],
+                           dark=dark[0],
+                           gain=gain[0],
+                           xml_file=xml[0],
+                           metadata=meta[0],
+                           lazy=lazy,
+                           chunks=chunks,
+                           nav_shape=nav_shape)
+    return s
 
 def load(filename=None,lazy=False, chunks=None, nav_shape=None, parameters=None):
     """Loads a .seq file into hyperspy.  Metadata taken from

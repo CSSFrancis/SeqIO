@@ -183,7 +183,7 @@ class SeqReader(object):
                     data[i] = np.fromfile(file, dtype_list, count=1)
         return data["Array"]
 
-    def get_single_image_data(self, im_start, chunk_size):
+    def get_image_chunk(self, im_start, chunk_size):
         with open(self.file, mode='rb') as file:
             dtype_list = [(("Array"), self.image_dict["ImageBitDepth"],
                            (self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]))]
@@ -204,10 +204,13 @@ class SeqReader(object):
                     data[i] = np.fromfile(file, dtype_list, count=1)
         return data["Array"]
 
-    def read_data(self, lazy=False, chunks=None, nav_shape=None):
+    def read_data(self, lazy=False, chunks=None, chunksize=None, nav_shape=None):
         if lazy:
-            if chunks is None:
-                chunks =10
+            if chunks is None and chunksize is not None:
+                chunks = int(np.ceil(chunksize/(self.image_dict["ImageWidth"] *
+                                self.image_dict["ImageHeight"]/2)))
+            elif chunks is None and chunksize is None:
+                chunks = 10
             from dask import delayed
             from dask.array import from_delayed
             from dask.array import concatenate
@@ -215,7 +218,9 @@ class SeqReader(object):
             extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
             chunk = [per_chunk]*(chunks-1) + [extra]
 
-            val = [delayed(self.get_single_image_data, pure=True)(per_chunk*i,chunk_size) for i, chunk_size in enumerate(chunk)]
+            val = [delayed(self.get_image_chunk, pure=True)
+                   (per_chunk*i, chunk_size) for
+                   i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
                                         self.image_dict["ImageWidth"],
