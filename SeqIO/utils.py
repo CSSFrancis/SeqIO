@@ -6,7 +6,7 @@ import numpy as np
 import glob
 
 try:
-    import cupy as cp
+    import cupy
     from cupyx.scipy.ndimage import label as clabel
     from cupyx.scipy.ndimage import sum as csum_labels
     from cupyx.scipy.ndimage import ccenter_of_mass, cmaximum_position
