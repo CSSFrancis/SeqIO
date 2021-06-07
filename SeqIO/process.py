@@ -152,7 +152,7 @@ if __name__ == '__main__':
     if hdr is None and args.integrate is False:
         dtype = bool
     else:
-        dtype = float
+        dtype = np.float32
 
 
     print("Input Dataset:", data)
