@@ -29,5 +29,19 @@ set up a bash file which looks like this...
 
 ```bash
 
+#!/bin/sh
+#SBATCH --time=0-04:30:00		# run time in days-hh:mm:ss
+#SBATCH --nodes=1			# require 1 nodes
+#SBATCH --ntasks-per-node=20            # (by default, "ntasks"="cpus")
+#SBATCH --gres=gpu:0                    # Number of GPUS
+#SBATCH --error=job.%J.err
+#SBATCH --output=job.%J.out
+#Make sure to change the above two lines to reflect your appropriate
+# file locations for standard error and output
 
+#Now list your executable command (or a string of them).
+# Example for non-SLURM-compiled code:
+module load cuda/10.2
+
+python3 process.py -ns 200 120 120 -d '/srv/home/csfrancis/4d_STEM/2021/2021-05-24CSF/SS10/SS102pt51NoCDS' -t 15 -hd False
 ```
