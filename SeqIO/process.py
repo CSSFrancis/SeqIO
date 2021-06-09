@@ -177,6 +177,8 @@ if __name__ == '__main__':
                                   convolve=True,
                                   dtype=dtype)
 
+    counted = counted.astype(dtype=dtype)
+
     if args.nav_shape is not None:
         new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
         print("The output data Shape: ", new_shape)
