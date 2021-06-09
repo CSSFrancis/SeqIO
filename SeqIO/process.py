@@ -198,6 +198,7 @@ if __name__ == '__main__':
     }
     sig = dict2signal(dictionary, lazy=True)
     print("Data... :", sig.data)
+    print("Dtype:", sig.data.dtype)
     print("Saving... ")
     sig.save(args.directory + ".hspy", compression=False, overwrite=True)
     tock = time.time()
