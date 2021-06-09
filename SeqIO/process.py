@@ -190,6 +190,7 @@ if __name__ == '__main__':
     else:
         axes = reader.create_axes()
     metadata = reader.create_metadata()
+    counted = counted.rechunk({-1 : -1, -2 : -1})
     dictionary = {
         'data': counted,
         'metadata': metadata,
