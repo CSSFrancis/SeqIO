@@ -182,7 +182,7 @@ if __name__ == '__main__':
     if args.nav_shape is not None:
         new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
         print("The output data Shape: ", new_shape)
-        counted = reshape(counted, new_shape, merge_chunks=False)
+        counted = reshape(counted, new_shape)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
