@@ -214,6 +214,7 @@ class SeqReader(object):
             from dask import delayed
             from dask.array import from_delayed
             from dask.array import concatenate
+            from dask.array import reshape
             per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
             extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
             chunk = [per_chunk]*(chunks-1) + [extra]
@@ -232,7 +233,7 @@ class SeqReader(object):
             data = self.get_image_data()
         if nav_shape is not None:
             shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]]
-            data = np.reshape(data, shape)
+            data = reshape(data, shape)
         return data
 
 
