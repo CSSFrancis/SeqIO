@@ -10,7 +10,7 @@ from SeqIO.CeleritasSeqReader import SeqReader as CeleritasSeqReader
 import hyperspy.api as hs
 from hyperspy.io import dict2signal
 from SeqIO.utils import _counting_filter_cpu, _counting_filter_gpu
-
+from dask.array import reshape
 
 def get_files(folder):
     file_dict = {"top": glob.glob(folder + "/*Top*.seq"),
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     if args.nav_shape is not None:
         new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
         print("The output data Shape: ", new_shape)
-        counted = np.reshape(counted, new_shape)
+        counted = reshape(counted, new_shape, merge_chunks=False)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
@@ -197,6 +197,7 @@ if __name__ == '__main__':
         'original_metadata': metadata,
     }
     sig = dict2signal(dictionary, lazy=True)
+    print("Data... :", sig.data)
     print("Saving... ")
     sig.save(args.directory + ".hspy", compression=False, overwrite=True)
     tock = time.time()
