@@ -69,8 +69,8 @@ class SeqReader(object):
                 self.dark_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]*2))),
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageHeight"]*2,
+                                                                     self.image_dict["ImageWidth"]))),
                     dtype=self.image_dict["ImageBitDepth"])
         except FileNotFoundError:
             print("No Dark Reference image found.  The Dark reference should be in the same directory "
@@ -90,8 +90,8 @@ class SeqReader(object):
                 self.gain_ref = np.array(
                     np.round(
                         np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageWidth"],
-                                                                     self.image_dict["ImageHeight"]*2))),
+                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageHeight"]*2,
+                                                                     self.image_dict["ImageWidth"]))),
                     dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
         except FileNotFoundError:
             print("No gain reference image found.  The Gain reference should be in the same directory "
@@ -139,9 +139,22 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
+            print("The prebuffer: ", self.segment_prebuffer)
             self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
-            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0]/self.segment_prebuffer-128)
+            print("The Image Height: ", self.image_dict["ImageHeight"])
             self.image_dict["GroupingBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
+            # If something is broken it is probably this incredibly dumb piece of code... 
+            # There is some dumb factor running around which is incredibly annoying..
+            stupid_factor = ((self.image_dict["GroupingBytes"] /
+                              self.segment_prebuffer /
+                              self.image_dict["ImageHeight"] / self.image_dict["ImageWidth"])-2)
+            stupid_factor = int(np.floor(stupid_factor *
+                                         self.image_dict["ImageHeight"] *
+                                         self.image_dict["ImageWidth"]))
+            print(stupid_factor)
+            self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0] /
+                                              self.segment_prebuffer-stupid_factor)
+            print("Grouping Bytes: ", self.image_dict["GroupingBytes"])
             if "NumFrames" not in self.image_dict:
                 print("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192) /
