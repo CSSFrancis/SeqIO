@@ -21,6 +21,7 @@ from hyperspy.docstrings.signal import OPTIMIZE_ARG
 import struct
 
 import xmltodict
+from dask.array import concatenate
 
 _logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class SeqReader(object):
             self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
             print("The Image Height: ", self.image_dict["ImageHeight"])
             self.image_dict["GroupingBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
-            # If something is broken it is probably this incredibly dumb piece of code... 
+            # If something is broken it is probably this incredibly dumb piece of code...
             # There is some dumb factor running around which is incredibly annoying..
             stupid_factor = ((self.image_dict["GroupingBytes"] /
                               self.segment_prebuffer /
@@ -313,17 +314,32 @@ class SeqReader(object):
             val = [delayed(self.get_image_chunk, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
-                                        self.image_dict["ImageWidth"],
-                                        self.image_dict["ImageHeight"]*2),
+                                        self.image_dict["ImageHeight"]*2,
+                                        self.image_dict["ImageWidth"]),
                                  dtype=self.image_dict["ImageBitDepth"])
                     for chunk_size, v in zip(chunk, val)]
             data = concatenate(data, axis=0)
         else:
             data = self.get_image_data()
         if nav_shape is not None:
-            shape = list(nav_shape) + [self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]*2]
+
+            shape = list(nav_shape) + [self.image_dict["ImageHeight"]*2, self.image_dict["ImageWidth"]]
+            if data.shape[0] != np.prod(nav_shape):
+                print("The data cannot but reshaped into the nav shape.  Probably this is because the "
+                      "pre-segment buffer is not a factor of the nav shape and thus frames are dropped...")
+                frames_added = np.prod(nav_shape) - data.shape[0]
+                print("Adding :", frames_added, "frames")
+                if lazy:
+                    from dask.array import concatenate
+                else:
+                    from numpy import concatenate
+                data = concatenate([data,
+                                    np.zeros((frames_added,
+                                           self.image_dict["ImageHeight"]*2,
+                                           self.image_dict["ImageWidth"]))], axis=0)
             data = np.reshape(data, shape)
-            data.rechunk({-2:-1, -1:-1})
+            if lazy:
+                data.rechunk({-2: -1, -1: -1})
         return data
 
 
