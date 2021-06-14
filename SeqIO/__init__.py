@@ -12,22 +12,24 @@ def load_folder(folder,
                 chunks=None,
                 nav_shape=None,
                 parameters=None):
-    top = glob.glob(folder+"*Top*.seq")
-    bottom = glob.glob(folder+"*Bottom*.seq")
-    seq =  glob.glob(folder+"*.seq")
-    gain = glob.glob(folder+"*gain*.mrc")
-    dark = glob.glob(folder+"*dark*.mrc")
-    xml = glob.glob(folder+"*.xml")
-    meta = glob.glob(folder+"*.metadata")
-    if len(top) == 0 and len(bottom) == 0:
-        s = load(seq[0], lazy=lazy)
+    params = {}
+    params["top"] = glob.glob(folder+"*Top*.seq")
+    params["bottom"] = glob.glob(folder+"*Bottom*.seq")
+    params["seq"] = glob.glob(folder+"*.seq")
+    params["gain"] = glob.glob(folder+"*gain*.mrc")
+    params["dark"] = glob.glob(folder+"*dark*.mrc")
+    params["xml_file"] = glob.glob(folder+"*.xml")
+    params["metadata"] = glob.glob(folder+"*.metadata")
+    if len(params["top"]) == 0 and len(params["bottom"]) == 0:
+        s = load(params["seq"][0], lazy=lazy)
     else:
-        s = load_celeritas(top=top[0],
-                           bottom=bottom[0],
-                           dark=dark[0],
-                           gain=gain[0],
-                           xml_file=xml[0],
-                           metadata=meta[0],
+        params.pop("seq")
+        for key in params:
+            if len(params[key]) == 0:
+                params[key] = None
+            else:
+                params[key] = params[key][0]
+        s = load_celeritas(**params,
                            lazy=lazy,
                            chunks=chunks,
                            nav_shape=nav_shape)
