@@ -87,6 +87,11 @@ if __name__ == '__main__':
                         type=int,
                         default=None,
                         help="The navigation shape for some n dimensional dataset")
+    parser.add_argument("-con",
+                        "--convolve",
+                        type=bool,
+                        default=False,
+                        help="Convolve the data before counting")
     args = parser.parse_args()
     #getting the relevant files
     file_dict = get_files(folder=args.directory)
@@ -165,7 +170,7 @@ if __name__ == '__main__':
                                   hdr_mask=cupy.asarray(hdr),
                                   method="maximum",
                                   mean_electron_val=args.mean_e,
-                                  convolve=True,
+                                  convolve=args.convolve,
                                   dtype=dtype)
     else:
         counted = data.map_blocks(_counting_filter_cpu,
@@ -174,10 +179,10 @@ if __name__ == '__main__':
                                   hdr_mask=hdr,
                                   method="maximum",
                                   mean_electron_val=args.mean_e,
-                                  convolve=True,
+                                  convolve=args.convolve,
                                   dtype=dtype)
-
-    counted = counted.astype(dtype=bool)
+    if args.integrate is False:
+        counted = counted.astype(dtype=bool)
 
     if args.nav_shape is not None:
         new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
