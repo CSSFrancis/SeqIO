@@ -163,7 +163,6 @@ if __name__ == '__main__':
     print("Input Dataset:", data)
     if args.gpu:
         data = data.map_blocks(cupy.asarray)
-
         counted = data.map_blocks(_counting_filter_gpu,
                                   threshold=args.threshold,
                                   integrate=args.integrate,
@@ -185,8 +184,17 @@ if __name__ == '__main__':
         counted = counted.astype(dtype=bool)
 
     if args.nav_shape is not None:
-        new_shape = list(args.nav_shape) + [reader.image_dict["ImageWidth"], reader.image_dict["ImageHeight"]*2]
+        new_shape = list(args.nav_shape) + [reader.image_dict["ImageHeight"]*2, reader.image_dict["ImageWidth"]]
         print("The output data Shape: ", new_shape)
+        if counted.shape[0] != np.prod(args.nav_shape):
+            print("The data cannot but reshaped into the nav shape.  Probably this is because the "
+                  "pre-segment buffer is not a factor of the nav shape and thus frames are dropped...")
+            frames_added = np.prod(args.nav_shape) - counted.shape[0]
+            print("Adding :", frames_added, "frames")
+            from dask.array import concatenate
+            counted = concatenate([counted, np.zeros((frames_added,
+                                                reader.image_dict["ImageHeight"] * 2,
+                                                reader.image_dict["ImageWidth"]))], axis=0)
         counted = reshape(counted, new_shape)
         test_size = 1
         for i in new_shape:
@@ -195,7 +203,7 @@ if __name__ == '__main__':
     else:
         axes = reader.create_axes()
     metadata = reader.create_metadata()
-    counted = counted.rechunk({-1 : -1, -2 : -1})
+    counted = counted.rechunk({-1: -1, -2: -1})
     dictionary = {
         'data': counted,
         'metadata': metadata,
