@@ -272,7 +272,7 @@ def build_parser():
                         action="store_true",
                         help="Convolve when counting, default is False")
     parser.add_argument("-f",
-                        "-fast_axis",
+                        "--fast_axis",
                         type=int,
                         default=None,
                         help="The navigation shape for some n dimensional dataset"
