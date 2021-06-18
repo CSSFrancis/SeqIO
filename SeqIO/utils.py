@@ -274,7 +274,7 @@ def build_parser():
     parser.add_argument("-f",
                         "--fast_axis",
                         type=int,
-                        default=None,
+                        default=0,
                         help="The navigation shape for some n dimensional dataset"
                         )
     args = parser.parse_args()
