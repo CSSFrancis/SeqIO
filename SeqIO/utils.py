@@ -247,7 +247,7 @@ def build_parser():
                         "--counting",
                         action="store_true",
                         help="If the dataset should be counted or just converted")
-    parser.add_argument("-h",
+    parser.add_argument("-hd",
                         "--hdr",
                         type=str,
                         default=None,
