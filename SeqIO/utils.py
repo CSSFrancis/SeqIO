@@ -391,11 +391,11 @@ def process(directory,
             counted = concatenate([counted, np.zeros((frames_added,
                                                 reader.image_dict["ImageHeight"] * 2,
                                                 reader.image_dict["ImageWidth"]))], axis=0)
-        counted = reshape(counted, new_shape)
+        counted = reshape(counted, new_shape,merge_chunks=False)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
-        axes = reader.create_axes(nav_shape=list(nav_shape), merge_chunks=False)
+        axes = reader.create_axes(nav_shape=list(nav_shape))
     else:
         axes = reader.create_axes()
     metadata = reader.create_metadata()
