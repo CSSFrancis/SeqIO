@@ -241,12 +241,10 @@ def build_parser():
                         help="The threshold for the counting filter")
     parser.add_argument("-i",
                         "--integrate",
-                        type=bool,
                         action="store_true",
                         help="If the data should be integrated instead of counted. For testing...")
     parser.add_argument("-c",
                         "--counting",
-                        type=bool,
                         action="store_true",
                         help="If the dataset should be counted or just converted")
     parser.add_argument("-h",
@@ -261,7 +259,6 @@ def build_parser():
                         help="The mean electron value")
     parser.add_argument("-g",
                         "--gpu",
-                        type=bool,
                         action="store_true",
                         help="Use GPU for Counting")
     parser.add_argument("-n",
@@ -272,7 +269,6 @@ def build_parser():
                         help="The navigation shape for some n dimensional dataset")
     parser.add_argument("-con",
                         "--convolve",
-                        type=bool,
                         action="store_true",
                         help="Convolve when counting, default is False")
     parser.add_argument("-f",
