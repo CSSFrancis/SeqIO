@@ -395,11 +395,11 @@ def process(directory,
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
-        axes = reader.create_axes(nav_shape=list(nav_shape))
+        axes = reader.create_axes(nav_shape=list(nav_shape), merge_chunks=False)
     else:
         axes = reader.create_axes()
     metadata = reader.create_metadata()
-    counted = counted.rechunk({fast_axis:-1, -1: -1, -2: -1})
+    #counted = counted.rechunk({fast_axis: -1, -1: -1, -2: -1})
     dictionary = {
         'data': counted,
         'metadata': metadata,
