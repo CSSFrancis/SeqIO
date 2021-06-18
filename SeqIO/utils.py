@@ -249,37 +249,22 @@ def build_parser():
                         type=bool,
                         action="store_true",
                         help="If the dataset should be counted or just converted")
-    parser.add_argument("-hd",
+    parser.add_argument("-h",
                         "--hdr",
                         type=str,
                         default=None,
                         help=" .hspy signal to apply as a HDR Mask")
-    parser.add_argument("-n",
-                        "--nonlinear",
-                        type=bool,
-                        action="store_true",
-                        help="If a nonlinear range mask should be calculated and applied")
     parser.add_argument("-m",
                         "--mean_e",
                         type=int,
                         default=104,
                         help="The mean electron value")
-    parser.add_argument("-mp",
-                        "--mean_p",
-                        type=int,
-                        default=80,
-                        help="The pixel value for an electron NOT TOTAL EVENT VALUE")
-    parser.add_argument("-nc",
-                        "--nonlinear_cutoff",
-                        type=int,
-                        default=3,
-                        help="The cut off in number of electrons to be considered non linear")
     parser.add_argument("-g",
                         "--gpu",
                         type=bool,
                         action="store_true",
                         help="Use GPU for Counting")
-    parser.add_argument("-ns",
+    parser.add_argument("-n",
                         "--nav_shape",
                         nargs="+",
                         type=int,
@@ -290,7 +275,7 @@ def build_parser():
                         type=bool,
                         action="store_true",
                         help="Convolve when counting, default is False")
-    parser.add_argument("-fa",
+    parser.add_argument("-f",
                         "-fast_axis",
                         type=int,
                         default=None,
