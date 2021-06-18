@@ -302,6 +302,8 @@ class SeqReader(object):
             if chunks is None and chunksize is not None:
                 chunks = int(self.image_dict["NumFrames"]/np.ceil(chunksize/(self.image_dict["ImageWidth"] *
                                 self.image_dict["ImageHeight"]*4))) #16 bit image (2 bytes)
+                if chunks == 0:
+                    chunks = 2
                 print("num of Chunks:", chunks)
             elif chunks is None and chunksize is None:
                 chunks = 10

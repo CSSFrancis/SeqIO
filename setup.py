@@ -16,10 +16,10 @@ setup(
         "electron microscopy",
     ],
     install_requires=[
-        "scikit-image >= 0.17.0",
+        "scikit-image >= 0.17.1",
         "matplotlib >= 3.1.1",  # 3.1.0 failed
         "scikit-learn >= 0.19",  # reason unknown
-        "hyperspy == 1.6.1",  # earlier versions incompatible with numpy >= 1.17.0 and hyperspy == 1.6.0 has a histogram bug
+        "hyperspy >= 1.6.2",  # earlier versions incompatible with numpy >= 1.17.0 and hyperspy == 1.6.0 has a histogram bug
         "diffsims >= 0.3",  # Makes use of functionality introduced in this release
         "lmfit >= 0.9.12",
         "numpy>= 1.20.0",
