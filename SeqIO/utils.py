@@ -387,15 +387,14 @@ def process(directory,
                   "pre-segment buffer is not a factor of the nav shape and thus frames are dropped...")
             frames_added = np.prod(nav_shape) - counted.shape[0]
             print("Adding :", frames_added, "frames")
-
+            print("Data", counted)
             from dask.array import concatenate
             counted = concatenate([counted, np.zeros((frames_added,
                                                 reader.image_dict["ImageHeight"] * 2,
                                                 reader.image_dict["ImageWidth"]))], axis=0)
-        print("Data before reshaping...", counted)
         counted = reshape(counted,
                           new_shape,
-                          merge_chunks=False)
+                          merge_chunks=True)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
