@@ -349,7 +349,7 @@ def process(directory,
     if nav_shape is not None:
         fast = nav_shape[-1]
     else:
-        fast=None
+        fast = None
     data = reader.read_data(lazy=True,
                             chunks=None,
                             fast_shape=fast)
@@ -402,6 +402,19 @@ def process(directory,
         counted = np.reshape(counted,
                              new_shape)
         print("Data after reshape", counted)
+        chunked = {}
+        if isinstance(fast_axis,int):
+            fast_axis = (fast_axis,)
+        for i in range(len(new_shape)):
+            if i in fast_axis:
+                chunked[i] = "auto"
+            elif i > len(new_shape)-3:
+                chunked[i] = -1
+            else:
+                chunked[i] = 1
+        print("New Chunks: ", chunked)
+        counted = counted.rechunk(chunked, block_size_limit=1e8)
+        print("Data after rechunk ", counted)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
@@ -409,7 +422,7 @@ def process(directory,
     else:
         axes = reader.create_axes()
     metadata = reader.create_metadata()
-    #counted = counted.rechunk({fast_axis: -1, -1: -1, -2: -1})
+
     dictionary = {
         'data': counted,
         'metadata': metadata,
