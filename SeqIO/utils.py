@@ -396,9 +396,8 @@ def process(directory,
             counted = concatenate([counted, np.zeros((frames_added,
                                                 reader.image_dict["ImageHeight"] * 2,
                                                 reader.image_dict["ImageWidth"]))], axis=0)
-        counted = reshape(counted,
-                          new_shape,
-                          merge_chunks=False)
+        counted = np.reshape(counted,
+                             new_shape)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
