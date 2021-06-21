@@ -395,7 +395,8 @@ def process(directory,
             from dask.array import concatenate
             counted = concatenate([counted, np.zeros((frames_added,
                                                 reader.image_dict["ImageHeight"] * 2,
-                                                reader.image_dict["ImageWidth"]))], axis=0)
+                                                reader.image_dict["ImageWidth"]))],
+                                  axis=0)
         counted = np.reshape(counted,
                              new_shape)
         test_size = 1

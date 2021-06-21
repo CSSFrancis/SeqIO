@@ -328,7 +328,7 @@ class SeqReader(object):
                 per_chunk = int(np.floor(per_chunk/nav_shape[-1])*nav_shape[-1])
                 chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
             if nav_shape is None and fast_shape is not None:
-                per_chunk = int(np.floor(per_chunk/fast_shape)*fast_shape)
+                per_chunk = fast_shape
                 chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
             extra = np.remainder(self.image_dict["NumFrames"], per_chunk)
             chunk = [per_chunk]*(chunks-1) + [extra]
