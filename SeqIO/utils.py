@@ -397,8 +397,10 @@ def process(directory,
                                                 reader.image_dict["ImageHeight"] * 2,
                                                 reader.image_dict["ImageWidth"]))],
                                   axis=0)
+        print("Data after adding frames", counted)
         counted = np.reshape(counted,
                              new_shape)
+        print("Data after reshape", counted)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
