@@ -297,21 +297,40 @@ class SeqReader(object):
                 data[i] = new_d
         return data["Array"]
 
-    def read_data(self, lazy=False, chunks=None, chunksize=None, nav_shape=None):
+    def read_data(self,
+                  lazy=False,
+                  chunks=None,
+                  nav_shape=None,
+                  fast_shape=None,
+                  ):
+        """Reads the data from the file provided.
+
+        Parameters:
+        lazy: bool
+            If the data should be loaded lazily
+        chunks: "str" or int
+            The number (or chunk size to read in) if None then the chunk size is ~100mb
+        """
         if lazy:
-            if chunks is None and chunksize is not None:
-                chunks = int(self.image_dict["NumFrames"]/np.ceil(chunksize/(self.image_dict["ImageWidth"] *
-                                self.image_dict["ImageHeight"]*4))) #16 bit image (2 bytes)
-                if chunks == 0:
+            if chunks is None:
+                total_bytes = (self.image_dict["NumFrames"] *
+                               self.image_dict["ImageWidth"] *
+                               self.image_dict["ImageHeight"]) * 4
+                chunks = int(np.ceil(total_bytes/100000000))
+                if chunks == 1:
                     chunks = 2
-                print("num of Chunks:", chunks)
-            elif chunks is None and chunksize is None:
-                chunks = 10
+            print("The number of chunks (before accounting for nav_shape): ", chunks)
             from dask import delayed
             from dask.array import from_delayed
             from dask.array import concatenate
             per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
-            extra = np.remainder(self.image_dict["NumFrames"], (chunks-1))
+            if nav_shape is not None and per_chunk > nav_shape[-1]:
+                per_chunk = int(np.floor(per_chunk/nav_shape[-1])*nav_shape[-1])
+                chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
+            if nav_shape is None and fast_shape is not None:
+                per_chunk = int(np.floor(per_chunk/fast_shape)*fast_shape)
+                chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
+            extra = np.remainder(self.image_dict["NumFrames"], per_chunk)
             chunk = [per_chunk]*(chunks-1) + [extra]
             val = [delayed(self.get_image_chunk, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,

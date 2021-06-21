@@ -346,9 +346,13 @@ def process(directory,
         hdr = hs.load(hdr).data
     else:
         hdr = None
-
+    if nav_shape is not None:
+        fast = nav_shape[-1]
+    else:
+        fast=None
     data = reader.read_data(lazy=True,
-                            chunksize=chunksize)
+                            chunks=None,
+                            fast_shape=fast)
     print(chunksize)
     print(data)
     if hdr is None and integrate is False:
