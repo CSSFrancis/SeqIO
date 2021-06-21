@@ -43,5 +43,5 @@ set up a bash file which looks like this...
 # Example for non-SLURM-compiled code:
 module load cuda/10.2
 
-python3 process.py -ns 200 120 120 -d '/srv/home/csfrancis/4d_STEM/2021/2021-05-24CSF/SS10/SS102pt51NoCDS' -t 15 -hd False
+python3 process.py -ns 200 120 120 -d '/srv/home/csfrancis/4d_STEM/2021/2021-05-24CSF/SS10/SS102pt51NoCDS' -t 6 -c 
 ```
