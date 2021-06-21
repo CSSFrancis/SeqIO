@@ -22,6 +22,8 @@ SeqIO.load(filename='test.seq', lazy=True, chunks=10, nav_shape=[4,5]) # 4D sign
 
 (Version 0.05 Update May 3, 2021) -- Support for loading of bottom/top images for the DE Celeritas Camera.  There are some quirks to loading this kind of data so any bug reports are appricated.
 
+(Version 0.07 Update June 21, 2021) -- Better for dealing with lazy chunking than pervious versions. (This part is still under some development especially with very large datasets)
+
 In addition there is a command line interface for SeqIO as well.  If you want to use the command line interface 
 the easiest way to do this is to `$git clone https://github.com/CSSFrancis/SeqIO.git` The repository and then
 set up a bash file which looks like this... 
