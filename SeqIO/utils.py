@@ -398,7 +398,7 @@ def process(directory,
                                                 reader.image_dict["ImageWidth"]))], axis=0)
         counted = reshape(counted,
                           new_shape,
-                          merge_chunks=True)
+                          merge_chunks=False)
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
