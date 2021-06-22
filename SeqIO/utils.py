@@ -15,6 +15,9 @@ from SeqIO.CeleritasSeqReader import SeqReader as CeleritasSeqReader
 import hyperspy.api as hs
 from hyperspy.io import dict2signal
 from dask.array import reshape
+import logging
+
+_logger = logging.getLogger(__name__)
 
 try:
     import cupy
@@ -111,12 +114,12 @@ def _counting_filter_cpu(image,
             else:
                 image[hdr_mask] = hdr_img[hdr_mask]
         if integrate is False and hdr_mask is None:
-            x = x.astype(bool) # converting to boolean...
+            x = x.astype(bool)  # converting to boolean...
         tock = time.time()
-        print("Time elapsed for one Chunk", tock-tick, "seconds")
+        _logger.info("Time elapsed for one Chunk" + str(tock-tick) + " seconds")
         return x
     except MemoryError:
-        print("Failed....  Memory Error")
+        _logger.error("Failed....  Memory Error")
 
 
 def _counting_filter_gpu(image,
@@ -167,7 +170,7 @@ def _counting_filter_gpu(image,
             struct = cupy.asarray([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
         all_labels, num = clabel(conv, structure=struct)  # get blobs
-        print("Number of Electrons per chunk:", num)
+        logging.info("Number of Electrons per chunk: "+ str(num))
         del conv  # Cleaning up GPU Memory
         del kern  # Cleaning up GPU Memory
 
@@ -209,7 +212,7 @@ def _counting_filter_gpu(image,
         x = x.get()
         return x
     except MemoryError:
-        print("Failed....  Memory Error")
+        _logger.error("Failed....  Memory Error")
 
 
 def _load_folder(folder):
@@ -308,7 +311,7 @@ def process(directory,
         try:
             reader = SeqReader(file=file_dict["seq"][0])
         except IndexError:
-            print("The folder : ", directory, " Doesn't have a .seq file in it")
+            _logger.error("The folder : "+ str(directory) + " Doesn't have a .seq file in it")
     else:
         file_dict.pop("seq")
         for key in file_dict:
@@ -331,16 +334,15 @@ def process(directory,
             CUPY_INSTALLED = True
             gpu_mem = cupy.cuda.runtime.getDeviceProperties(0)["totalGlobalMem"]
             chunksize = gpu_mem/200
-            print("The available Memory for each GPU is: ", gpu_mem/1000000000, "Gb")
-            print("Each chunk is: ", chunksize / 1000000000, "Gb")
+            _logger.info("The available Memory for each GPU is: " + str(gpu_mem/1000000000) + "Gb \n"
+                          "Each chunk is: " + str(chunksize / 1000000000)+"Gb")
         except ImportError:
             CUPY_INSTALLED = False
             gpu = False
-            print("Cupy Must be installed to use GPU Processing.... ")
-            print("Using CPU Processing instead")
+            _logger.warning("Cupy Must be installed to use GPU Processing.... \n Using CPU Processing instead")
     if not gpu:
         chunksize = 100000000
-        print("Each chunk is: ", chunksize / 1000000000, "Gb")
+        _logger.info("Each chunk is: " + str(chunksize / 1000000000) + "Gb")
 
     if hdr is not None:
         hdr = hs.load(hdr).data
@@ -385,23 +387,23 @@ def process(directory,
     print()
     if nav_shape is not None:
         new_shape = list(nav_shape) + [reader.image_dict["ImageHeight"]*2, reader.image_dict["ImageWidth"]]
-        print("The output data Shape: ", new_shape)
+        _logger.info("The output data Shape: " + str(new_shape))
         if counted.shape[0] != np.prod(nav_shape):
-            print("The data cannot but reshaped into the nav shape.  Probably this is because the "
+            _logger.warning("The data cannot but reshaped into the nav shape.  Probably this is because the "
                   "pre-segment buffer is not a factor of the nav shape and thus frames are dropped...")
             frames_added = np.prod(nav_shape) - counted.shape[0]
-            print("Adding :", frames_added, "frames")
-            print("Data", counted)
+            _logger.warning("Adding :" + str(frames_added) + "frames")
+            _logger.warning("Data" + str(counted))
             from dask.array import concatenate
             from dask.array import zeros
             counted = concatenate([counted, zeros((frames_added,
                                                    reader.image_dict["ImageHeight"] * 2,
                                                    reader.image_dict["ImageWidth"]))],
                                   axis=0)
-        print("Data after adding frames", counted)
+        _logger.info("Data after adding frames:  " +str(counted))
         counted = np.reshape(counted,
                              new_shape)
-        print("Data after reshape", counted)
+        _logger.info("Data after reshape" + str(counted))
         chunked = {}
         if isinstance(fast_axis,int):
             fast_axis = (fast_axis,)
@@ -412,9 +414,9 @@ def process(directory,
                 chunked[i] = -1
             else:
                 chunked[i] = 1
-        print("New Chunks: ", chunked)
+        _logger.info("New Chunks: " +str(chunked))
         counted = counted.rechunk(chunked, block_size_limit=1e8)
-        print("Data after rechunk ", counted)
+        _logger.info("Data after rechunk: " +str(counted))
         test_size = 1
         for i in new_shape:
             test_size = test_size*i
@@ -429,15 +431,15 @@ def process(directory,
         'axes': axes,
         'original_metadata': metadata,
     }
-    print(counted)
+    _logger.info(counted)
     sig = dict2signal(dictionary, lazy=True)
-    print("Data... :", sig.data)
-    print("Dtype:", sig.data.dtype)
-    print("Saving... ")
+    _logger.info("Data... :" + str(sig.data))
+    _logger.info("Dtype:" + str(sig.data.dtype))
+    _logger.info("Saving... ")
     sig.save(directory + ".hspy", compression=False, overwrite=True)
     tock = time.time()
-    print("Total time elapsed : ", tock-tick, " sec")
-    print("Time per frame: ",  (tock-tick)/reader.image_dict["NumFrames"], "sec")
+    _logger.info("Total time elapsed : " + str(tock-tick) + " sec")
+    _logger.info("Time per frame: " + str((tock-tick)/reader.image_dict["NumFrames"])+ "sec")
 
 
 

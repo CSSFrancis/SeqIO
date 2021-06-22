@@ -56,8 +56,8 @@ class SeqReader(object):
                                                                     self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])
         except FileNotFoundError:
-            print("No Dark Reference image found.  The Dark reference should be in the same directory "
-                  "as the image and have the form xxx.seq.dark.mrc")
+            _logger.info("No Dark Reference image found.  The Dark reference should be in the same directory "
+                         "as the image and have the form xxx.seq.dark.mrc")
 
     def _get_gain_ref(self):
         try:
@@ -75,8 +75,8 @@ class SeqReader(object):
                                                                      self.image_dict["ImageHeight"]))),
                     dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
         except FileNotFoundError:
-            print("No gain reference image found.  The Gain reference should be in the same directory "
-                  "as the image and have the form xxx.seq.gain.mrc")
+            _logger.info("No gain reference image found.  The Gain reference should be in the same directory "
+                         "as the image and have the form xxx.seq.gain.mrc")
 
     def parse_header(self):
         with open(self.file, mode='rb') as file:  # b is important -> binary
@@ -126,8 +126,8 @@ class SeqReader(object):
                 self.metadata_dict["DiffPixelSize"] = m[4]
 
         except FileNotFoundError:
-            print("No metadata file.  The metadata should be in the same directory "
-                  "as the image and have the form xxx.seq.metadata")
+            _logger.info("No metadata file.  The metadata should be in the same directory "
+                         "as the image and have the form xxx.seq.metadata")
         return
 
     def create_axes(self, nav_shape=None, nav_names=["x","y","time"]):
