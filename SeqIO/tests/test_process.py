@@ -14,4 +14,5 @@ def test_process(integrate, counting, convolve, nav_shape, fast_axis):
                    counting=counting,
                    convolve=convolve,
                    nav_shape=nav_shape,
-                   fast_axis=fast_axis)
+                   fast_axis=fast_axis,
+                   verbose=True)

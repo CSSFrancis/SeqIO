@@ -127,7 +127,7 @@ class SeqReader(object):
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[0]
-            _logger.info('Each frame is %i x %i pixels', (image_info[0], image_info[0]))
+            _logger.info('Each frame is'+ str(image_info[0])+ "x" + str(image_info[0]))
             file.seek(572)
             file.seek(580)
             read_bytes = file.read(4)
