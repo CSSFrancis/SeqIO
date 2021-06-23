@@ -116,7 +116,7 @@ def _counting_filter_cpu(image,
         if integrate is False and hdr_mask is None:
             x = x.astype(bool)  # converting to boolean...
         tock = time.time()
-        _logger.l("Time elapsed for one Chunk" + str(tock-tick) + " seconds")
+        _logger.info(msg="Time elapsed for one Chunk" + str(tock-tick) + " seconds")
         return x
     except MemoryError:
         _logger.error("Failed....  Memory Error")
