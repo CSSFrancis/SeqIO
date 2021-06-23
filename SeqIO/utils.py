@@ -314,8 +314,7 @@ def process(directory,
             convolve=False,
             verbose=False):
     if verbose:
-        root = logging.getLogger()
-        root.setLevel(logging.DEBUG)
+        _logger.setLevel(logging.DEBUG)
         #handler = logging.StreamHandler(sys.stdout)
         #handler.setLevel(logging.DEBUG)
         #formatter = logging.Formatter('%(message)s')
