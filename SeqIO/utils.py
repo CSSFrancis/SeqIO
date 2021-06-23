@@ -13,6 +13,7 @@ import numpy as np
 import time
 from SeqIO.SeqReader import SeqReader
 from SeqIO.CeleritasSeqReader import SeqReader as CeleritasSeqReader
+from SeqIO.version import __version__
 import hyperspy.api as hs
 from hyperspy.io import dict2signal
 from dask.array import reshape
@@ -317,9 +318,14 @@ def process(directory,
         root.setLevel(logging.DEBUG)
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('-- %(levelname)s -- %(message)s \n')
+        formatter = logging.Formatter('%(message)s')
         handler.setFormatter(formatter)
         root.addHandler(handler)
+    _logger.info(msg="\n\n .SEQ Processor Application (and Counting)...\n"
+                     "Created by: Carter Francis (csfrancis@wisc.edu)\n"
+                     "Updated 2021-06-18\n"
+                     "------------------\n")
+    _logger.info(msg="Version:" + __version__)
     tick = time.time()
     file_dict = get_files(folder=directory)
     if len(file_dict["top"]) == 0 and len(file_dict["bottom"]) == 0:
