@@ -419,7 +419,7 @@ def process(directory,
             from dask.array import zeros
             counted = concatenate([counted, zeros((frames_added,
                                                    reader.image_dict["ImageHeight"] * 2,
-                                                   reader.image_dict["ImageWidth"]))],
+                                                   reader.image_dict["ImageWidth"]),dtype=dtype), ],
                                   axis=0)
         _logger.info("Data after adding frames:  " + str(counted))
         counted = np.reshape(counted,
