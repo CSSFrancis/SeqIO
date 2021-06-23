@@ -7,6 +7,7 @@ from scipy.signal import fftconvolve
 import argparse
 import os
 import glob
+import sys
 
 import numpy as np
 import time
@@ -312,8 +313,13 @@ def process(directory,
             convolve=False,
             verbose=False):
     if verbose:
-        logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
-        print("Logging....")
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
     tick = time.time()
     file_dict = get_files(folder=directory)
     if len(file_dict["top"]) == 0 and len(file_dict["bottom"]) == 0:
