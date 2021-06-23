@@ -278,8 +278,9 @@ def build_parser():
                         help="Convolve when counting, default is False")
     parser.add_argument("-f",
                         "--fast_axis",
+                        nargs="+",
                         type=int,
-                        default=0,
+                        default=None,
                         help="The navigation shape for some n dimensional dataset"
                         )
     parser.add_argument("-v",
