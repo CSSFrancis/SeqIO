@@ -3,9 +3,7 @@ from SeqIO.CeleritasSeqReader import file_reader as c_reader
 from hyperspy._signals.signal2d import Signal2D
 from hyperspy.io import dict2signal
 import glob
-
-
-
+from SeqIO.version import __version__
 
 def load_folder(folder,
                 lazy=False,

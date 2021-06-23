@@ -83,7 +83,7 @@ def _counting_filter_cpu(image,
                       [1, 1, 1],
                       [1, 1, 1]]
         all_labels, num = label(conv, structure=struct)  # get blobs
-        print(num)
+        print("Number of electrons Found! : ", num, flush=True)
         if method is "center_of_mass":
             ind = center_of_mass(image, all_labels, range(1, num))
         elif method is "maximum":
@@ -116,7 +116,7 @@ def _counting_filter_cpu(image,
         if integrate is False and hdr_mask is None:
             x = x.astype(bool)  # converting to boolean...
         tock = time.time()
-        _logger.info("Time elapsed for one Chunk" + str(tock-tick) + " seconds")
+        _logger.l("Time elapsed for one Chunk" + str(tock-tick) + " seconds")
         return x
     except MemoryError:
         _logger.error("Failed....  Memory Error")
@@ -280,6 +280,11 @@ def build_parser():
                         default=0,
                         help="The navigation shape for some n dimensional dataset"
                         )
+    parser.add_argument("-v",
+                        "--verbose",
+                        action="store_true",
+                        help="Increase verbosity of output"
+                        )
     args = parser.parse_args()
     return args
 
@@ -304,7 +309,10 @@ def process(directory,
             gpu=False,
             nav_shape=None,
             fast_axis=0,
-            convolve=False):
+            convolve=False,
+            verbose=False):
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
     tick = time.time()
     file_dict = get_files(folder=directory)
     if len(file_dict["top"]) == 0 and len(file_dict["bottom"]) == 0:
@@ -355,8 +363,8 @@ def process(directory,
     data = reader.read_data(lazy=True,
                             chunks=None,
                             fast_shape=fast)
-    print(chunksize)
-    print(data)
+    print(chunksize, flush=True)
+    print(data, flush=True)
     if hdr is None and integrate is False:
         dtype = bool
     else:
@@ -400,7 +408,7 @@ def process(directory,
                                                    reader.image_dict["ImageHeight"] * 2,
                                                    reader.image_dict["ImageWidth"]))],
                                   axis=0)
-        _logger.info("Data after adding frames:  " +str(counted))
+        _logger.info("Data after adding frames:  " + str(counted))
         counted = np.reshape(counted,
                              new_shape)
         _logger.info("Data after reshape" + str(counted))
@@ -414,8 +422,8 @@ def process(directory,
                 chunked[i] = -1
             else:
                 chunked[i] = 1
-        _logger.info("New Chunks: " +str(chunked))
-        counted = counted.rechunk(chunked, block_size_limit=1e8)
+        _logger.info("New Chunks: " + str(chunked))
+        #counted = counted.rechunk(chunked, block_size_limit=1e8)
         _logger.info("Data after rechunk: " +str(counted))
         test_size = 1
         for i in new_shape:
