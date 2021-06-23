@@ -436,7 +436,7 @@ def process(directory,
             else:
                 chunked[i] = 1
         _logger.info("New Chunks: " + str(chunked))
-        #counted = counted.rechunk(chunked, block_size_limit=1e8)
+        counted = counted.rechunk(chunked, block_size_limit=1e8)
         _logger.info("Data after rechunk: " +str(counted))
         test_size = 1
         for i in new_shape:
