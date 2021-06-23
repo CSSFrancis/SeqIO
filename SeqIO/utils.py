@@ -315,11 +315,11 @@ def process(directory,
             verbose=False):
     if verbose:
         _logger.setLevel(logging.DEBUG)
-        #handler = logging.StreamHandler(sys.stdout)
-        #handler.setLevel(logging.DEBUG)
-        #formatter = logging.Formatter('%(message)s')
-        #handler.setFormatter(formatter)
-        #root.addHandler(handler)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
     _logger.info(msg="\n\n .SEQ Processor Application (and Counting)...\n"
                      "Created by: Carter Francis (csfrancis@wisc.edu)\n"
                      "Updated 2021-06-18\n"
