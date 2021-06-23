@@ -312,7 +312,7 @@ def process(directory,
             convolve=False,
             verbose=False):
     if verbose:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.INFO)
     tick = time.time()
     file_dict = get_files(folder=directory)
     if len(file_dict["top"]) == 0 and len(file_dict["bottom"]) == 0:
