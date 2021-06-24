@@ -29,7 +29,7 @@ def load_folder(folder,
                 params[key] = params[key][0]
         s = load_celeritas(**params,
                            lazy=lazy,
-                           chunks=chunks,
+                           chunk_size=chunks,
                            nav_shape=nav_shape)
     return s
 
