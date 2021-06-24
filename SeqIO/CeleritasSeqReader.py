@@ -264,7 +264,9 @@ class SeqReader(object):
                 data[i] = new_d
         return data["Array"]
 
-    def get_image_chunk(self, im_start, chunk_size):
+    def get_image_chunk(self,
+                        im_start,
+                        chunk_size):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
             data = np.empty(chunk_size,
@@ -299,9 +301,9 @@ class SeqReader(object):
 
     def read_data(self,
                   lazy=False,
-                  chunks=None,
+                  chunk_size=None,
                   nav_shape=None,
-                  fast_shape=None,
+                  fill_chunk=True,
                   ):
         """Reads the data from the file provided.
 
@@ -310,29 +312,29 @@ class SeqReader(object):
             If the data should be loaded lazily
         chunks: "str" or int
             The number (or chunk size to read in) if None then the chunk size is ~100mb
+        fill_chunk: bool
+            If the chunk will be filled out (if there is extra left over)
         """
         if lazy:
-            if chunks is None:
-                total_bytes = (self.image_dict["NumFrames"] *
-                               self.image_dict["ImageWidth"] *
-                               self.image_dict["ImageHeight"]) * 4
-                chunks = int(np.ceil(total_bytes/100000000))
-                if chunks == 1:
-                    chunks = 2
-            print("The number of chunks (before accounting for nav_shape): ", chunks)
+            if chunk_size is None:
+                img_bytes = (self.image_dict["ImageWidth"] *
+                             self.image_dict["ImageHeight"]) * 4
+                chunk_size = int(np.ceil(100000000/img_bytes))
             from dask import delayed
             from dask.array import from_delayed
             from dask.array import concatenate
-            per_chunk = np.floor_divide(self.image_dict["NumFrames"], (chunks-1))
-            if nav_shape is not None and per_chunk > nav_shape[-1]:
-                per_chunk = int(np.floor(per_chunk/nav_shape[-1])*nav_shape[-1])
-                chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
-            if nav_shape is None and fast_shape is not None:
-                per_chunk = fast_shape
-                chunks = np.floor_divide(self.image_dict["NumFrames"], per_chunk)
-            extra = np.remainder(self.image_dict["NumFrames"], per_chunk)
-            chunk = [per_chunk]*(chunks-1) + [extra]
-            val = [delayed(self.get_image_chunk, pure=True)(per_chunk*i, chunk_size) for i, chunk_size in enumerate(chunk)]
+            chunks, extra_chunk = np.divmod(self.image_dict["NumFrames"], chunk_size)
+            if fill_chunk and extra_chunk != 0:
+                chunk = [chunk_size, ] * (chunks + 1)
+            elif extra_chunk == 0:
+                chunk = [chunk_size, ] * chunks + [extra_chunk]
+            else:
+                chunk = [chunk_size, ] * chunks
+            print(chunks)
+
+            val = [delayed(self.get_image_chunk,
+                           pure=True)(chunk_size*i,
+                                      chunk_size) for i, chunk_size in enumerate(chunk)]
             data = [from_delayed(v,
                                  shape=(chunk_size,
                                         self.image_dict["ImageHeight"]*2,
@@ -410,7 +412,7 @@ def file_reader(top=None,
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy,
-                         fast_shape=chunk_size,
+                         chunk_size=chunk_size,
                          nav_shape=nav_shape)
     dictionary = {
         'data': data,
