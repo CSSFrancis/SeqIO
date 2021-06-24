@@ -370,7 +370,8 @@ def file_reader(top=None,
                 metadata=None,
                 xml_file=None,
                 lazy=False,
-                nav_shape=None, chunks=10):
+                nav_shape=None,
+                chunk_size=10):
     """Reads a .seq file.
 
     Parameters
@@ -408,7 +409,7 @@ def file_reader(top=None,
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
-    data = seq.read_data(lazy=lazy, chunks=chunks, nav_shape=nav_shape)
+    data = seq.read_data(lazy=lazy, fast_shape=chunk_size, nav_shape=nav_shape)
     dictionary = {
         'data': data,
         'metadata': metadata,
