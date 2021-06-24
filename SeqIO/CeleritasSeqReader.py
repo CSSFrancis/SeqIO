@@ -299,6 +299,7 @@ class SeqReader(object):
                         new_d["Array"] = d
                 except IndexError:
                     _logger.info(msg="Adding a Frame")
+                    print("adding a Frame")
                 data[i] = new_d
         return data["Array"]
 
@@ -349,22 +350,7 @@ class SeqReader(object):
             data = self.get_image_data()
         if nav_shape is not None:
             shape = list(nav_shape) + [self.image_dict["ImageHeight"]*2, self.image_dict["ImageWidth"]]
-            if data.shape[0] != np.prod(nav_shape):
-                print("The data cannot but reshaped into the nav shape.  Probably this is because the "
-                      "pre-segment buffer is not a factor of the nav shape and thus frames are dropped...")
-                frames_added = np.prod(nav_shape) - data.shape[0]
-                print("Adding :", frames_added, "frames")
-                if lazy:
-                    from dask.array import concatenate
-                else:
-                    from numpy import concatenate
-                data = concatenate([data,
-                                    np.zeros((frames_added,
-                                           self.image_dict["ImageHeight"]*2,
-                                           self.image_dict["ImageWidth"]))], axis=0)
             data = np.reshape(data, shape)
-            if lazy:
-                data.rechunk({-2: -1, -1: -1})
         return data
 
 
