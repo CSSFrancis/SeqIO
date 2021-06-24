@@ -409,7 +409,9 @@ def file_reader(top=None,
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
-    data = seq.read_data(lazy=lazy, fast_shape=chunk_size, nav_shape=nav_shape)
+    data = seq.read_data(lazy=lazy,
+                         fast_shape=chunk_size,
+                         nav_shape=nav_shape)
     dictionary = {
         'data': data,
         'metadata': metadata,

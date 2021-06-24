@@ -5,12 +5,26 @@ from hyperspy.io import dict2signal
 import glob
 from SeqIO.version import __version__
 
+
 def load_folder(folder,
                 lazy=False,
-                chunks=None,
+                chunk_size=None,
                 nav_shape=None,
-                parameters=None):
-    params = {}
+                ):
+    """Loads a folder of .seq type files (i.e. metadata dark/gain references
+
+    Parameters
+    ------------
+    lazy: bool
+        If the dataset should be loaded into RAM or loaded lazily
+    chunk_size: int or tuple
+        If lazy is True --> The size of each chunk (-1 spans the full dimension).  This is only for
+        the navigation axes.  (Eventually maybe change this to allow for chunking in signal axes if
+        there is enough demand)
+    nav_shape: tuple
+        The shape of the navigation axes.  This reshapes the navigation axes
+    """
+    params = dict()
     params["top"] = glob.glob(folder+"*Top*.seq")
     params["bottom"] = glob.glob(folder+"*Bottom*.seq")
     params["seq"] = glob.glob(folder+"*.seq")
@@ -20,6 +34,7 @@ def load_folder(folder,
     params["metadata"] = glob.glob(folder+"*.metadata")
     if len(params["top"]) == 0 and len(params["bottom"]) == 0:
         s = load(params["seq"][0], lazy=lazy)
+        # Rewrite regular .Seq loading...
     else:
         params.pop("seq")
         for key in params:
@@ -29,11 +44,16 @@ def load_folder(folder,
                 params[key] = params[key][0]
         s = load_celeritas(**params,
                            lazy=lazy,
-                           chunk_size=chunks,
+                           chunk_size=chunk_size,
                            nav_shape=nav_shape)
     return s
 
-def load(filename=None,lazy=False, chunks=None, nav_shape=None, parameters=None):
+
+def load(filename=None,
+         lazy=False,
+         chunks=None,
+         nav_shape=None,
+         ):
     """Loads a .seq file into hyperspy.  Metadata taken from
     the .metadata file as well as from a paramters.txt file that
     can be passed as well.  The parameters file is used calibrate using
@@ -52,6 +72,7 @@ def load(filename=None,lazy=False, chunks=None, nav_shape=None, parameters=None)
                       lazy=lazy)
     return sig
 
+
 def load_celeritas(top,
                    bottom,
                    dark=None,
@@ -59,9 +80,9 @@ def load_celeritas(top,
                    metadata=None,
                    xml_file=None,
                    lazy=False,
-                   chunks=None,
+                   chunk_size=None,
                    nav_shape=None,
-                   parameters=None):
+                   ):
     """Loads a .seq file into hyperspy.  Metadata taken from
     the .metadata file as well as from a paramters.txt file that
     can be passed as well.  The parameters file is used calibrate using
@@ -95,7 +116,7 @@ def load_celeritas(top,
                                metadata=metadata,
                                xml_file=xml_file,
                                lazy=lazy,
-                               chunks=chunks,
+                               chunk_size=chunk_size,
                                nav_shape=nav_shape),
                       lazy=lazy)
     return sig
