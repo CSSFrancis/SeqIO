@@ -53,8 +53,8 @@ def build_parser():
                         type=int,
                         default=None,
                         help="The navigation shape for some n dimensional dataset")
-    parser.add_argument("-f",
-                        "--fast_axis",
+    parser.add_argument("-cs",
+                        "--chunk_shape",
                         nargs="+",
                         type=int,
                         default=None,
