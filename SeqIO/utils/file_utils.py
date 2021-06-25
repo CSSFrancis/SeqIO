@@ -21,7 +21,7 @@ def get_files(folder):
 def read_ref(file_name,
              height,
              width,
-             dtype=np.float32):
+             ):
     """Reads a reference image from the file using the file name as well as the width and height of the image. """
     if file_name is None:
         return
@@ -33,10 +33,7 @@ def read_ref(file_name,
             frame_height = struct.unpack('<i', read_bytes[4:8])[0]
             file.seek(256 * 4)
             bytes = file.read(frame_width * frame_height * 4)
-            dark_ref = np.array(
-                np.round(
-                    np.reshape(
-                        np.frombuffer(bytes, dtype=np.float32), (height, width))), dtype=dtype)
+            dark_ref = np.reshape(np.frombuffer(bytes, dtype=np.float32), (height, width))
         return dark_ref
     except FileNotFoundError:
         _logger.warning("No Dark Reference image found.  The Dark reference should be in the same directory "

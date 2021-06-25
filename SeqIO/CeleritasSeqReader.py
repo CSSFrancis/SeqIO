@@ -246,11 +246,12 @@ class SeqReader(object):
                     d = np.concatenate((np.flip(t["Array"][0], axis=0), b["Array"][0]), axis=0)
                     if self.dark_ref is not None:
                         d = (d - self.dark_ref)
+                        d[d < 0] = 0
                         d[d > max_pix] = 0
                     if self.gain_ref is not None:
                         d = d * self.gain_ref  # Numpy doesn't check for overflow.
                         # There might be a better way to do this. OpenCV has a method for subtracting
-                        new_d["Array"] = d
+                    new_d["Array"] = d
                 except IndexError:
                     _logger.info(msg="Adding a Frame")
                 data[chunk_ind] = new_d
@@ -300,7 +301,8 @@ class SeqReader(object):
             data = indexes.map_blocks(self.get_image_chunk,
                                       chunks=chunks,
                                       new_axis=new_axis,
-                                      dtype=np.float32)
+                                      dtype=np.float32
+                                      )
         else:
             data = self.get_image_data()
         return data
