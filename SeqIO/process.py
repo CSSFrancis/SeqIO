@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from SeqIO.utils import build_parser, process
+from SeqIO.utils.process_utils import build_parser, process
 import logging
 from SeqIO.version import __version__
 
