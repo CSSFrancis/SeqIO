@@ -17,11 +17,11 @@ writes = False
 import os
 import logging
 import numpy as np
-from hyperspy.docstrings.signal import OPTIMIZE_ARG
 import struct
 
 import xmltodict
-from dask.array import concatenate
+import dask.array as da
+from SeqIO.utils.file_utils import read_ref
 
 _logger = logging.getLogger(__name__)
 
@@ -54,55 +54,11 @@ class SeqReader(object):
         self.image_dtype_full_list = None
         self.image_dtype_split_list = None
 
-    def _get_dark_ref(self):
-        # The dark and gain references are saved as 32 bit floats. I can either change the image to 32 bit float
-        # or change the dark and gain references to 16 bit int images.
-        if self.dark_file is None:
-            return
-        try:
-            with open(self.dark_file, mode='rb') as file:
-                file.seek(0)
-                read_bytes = file.read(8)
-                frame_width = struct.unpack('<i', read_bytes[0:4])[0]
-                frame_height = struct.unpack('<i', read_bytes[4:8])[0]
-                file.seek(256 * 4)
-                bytes = file.read(frame_width * frame_height * 4)
-                self.dark_ref = np.array(
-                    np.round(
-                        np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageHeight"]*2,
-                                                                     self.image_dict["ImageWidth"]))),
-                    dtype=self.image_dict["ImageBitDepth"])
-        except FileNotFoundError:
-            print("No Dark Reference image found.  The Dark reference should be in the same directory "
-                  "as the image and have the form xxx.seq.dark.mrc")
-
-    def _get_gain_ref(self):
-        if self.gain_file is None:
-            return
-        try:
-            with open (self.gain_file, mode='rb') as file:
-                file.seek(0)
-                read_bytes = file.read(8)
-                frame_width = struct.unpack('<i', read_bytes[0:4])[0]
-                frame_height = struct.unpack('<i', read_bytes[4:8])[0]
-                file.seek(256 * 4)
-                bytes = file.read(frame_width * frame_height * 4)
-                self.gain_ref = np.array(
-                    np.round(
-                        np.reshape(
-                            np.frombuffer(bytes, dtype=np.float32), (self.image_dict["ImageHeight"]*2,
-                                                                     self.image_dict["ImageWidth"]))),
-                    dtype=self.image_dict["ImageBitDepth"])  # Casting to 16 bit ints
-        except FileNotFoundError:
-            print("No gain reference image found.  The Gain reference should be in the same directory "
-                  "as the image and have the form xxx.seq.gain.mrc")
-
     def _get_xml_file(self):
         if self.xml_file is None:
-            print("No xml file is given. While the program might still run it is important to have "
-                  "and xml file.  At faster FPS the XML file will contain information necessary to"
-                  "properly load the images")
+            _logger.warning("No xml file is given. While the program might still run it is important to have "
+                            "and xml file.  At faster FPS the XML file will contain information necessary to"
+                             "properly load the images")
             return
         with open(self.xml_file, "r") as file:
             dict = xmltodict.parse(file.read())
@@ -113,7 +69,6 @@ class SeqReader(object):
             self.image_dict["NumFrames"] = int(file_info["TotalFrames"])
             self.xml_metadata = file_info
             return
-
 
     def parse_header(self):
         with open(self.top, mode='rb') as file:  # b is important -> binary
@@ -127,12 +82,12 @@ class SeqReader(object):
             self.image_dict['ImageBitDepth'] = data_types[image_info[2]]  # image bit depth
             self.image_dict["ImageBitDepthReal"] = image_info[3]  # actual recorded bit depth
             self.image_dict["FrameLength"] = image_info[0] * image_info[0]
-            _logger.info('Each frame is'+ str(image_info[0])+ "x" + str(image_info[0]))
+            _logger.info('Each frame is' + str(image_info[0]) + "x" + str(image_info[0]))
             file.seek(572)
             file.seek(580)
             read_bytes = file.read(4)
             if self.segment_prebuffer is None:
-                print("Trying to guess the segment pre-factor... Please load .xml File to help")
+                _logger.warning("Trying to guess the segment pre-factor... Please load .xml File to help")
                 # try to guess it?
                 if self.image_dict["ImageWidth"] == 512:
                     self.segment_prebuffer = 16
@@ -140,9 +95,9 @@ class SeqReader(object):
                     self.segment_prebuffer = 64
                 else:
                     self.segment_prebuffer = 4
-            print("The prebuffer: ", self.segment_prebuffer)
+            _logger.info("The prebuffer: " + str(self.segment_prebuffer))
             self.image_dict['ImageHeight'] = int(image_info[1]/self.segment_prebuffer)
-            print("The Image Height: ", self.image_dict["ImageHeight"])
+            _logger.info("The Image Height: "+ str(self.image_dict["ImageHeight"]))
             self.image_dict["GroupingBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0])
             # If something is broken it is probably this incredibly dumb piece of code...
             # There is some dumb factor running around which is incredibly annoying..
@@ -152,12 +107,12 @@ class SeqReader(object):
             stupid_factor = int(np.floor(stupid_factor *
                                          self.image_dict["ImageHeight"] *
                                          self.image_dict["ImageWidth"]))
-            print(stupid_factor)
+            _logger.info("Stupid Factor: "+str(stupid_factor))
             self.image_dict["ImgBytes"] = int(struct.unpack('<L', read_bytes[0:4])[0] /
                                               self.segment_prebuffer-stupid_factor)
-            print("Grouping Bytes: ", self.image_dict["GroupingBytes"])
+            _logger.info("Grouping Bytes: " +str(self.image_dict["GroupingBytes"]))
             if "NumFrames" not in self.image_dict:
-                print("Guessing the number of frames")
+                _logger.warning("Guessing the number of frames")
                 self.image_dict["NumFrames"] = int((os.path.getsize(self.top)-8192) /
                                                    (self.image_dict["GroupingBytes"]/self.segment_prebuffer))
             _logger.info('%i number of frames found', self.image_dict["NumFrames"])
@@ -195,8 +150,8 @@ class SeqReader(object):
                 self.metadata_dict["DiffPixelSize"] = m[4]
 
         except FileNotFoundError:
-            print("No metadata file.  The metadata should be in the same directory "
-                  "as the image and have the form xxx.seq.metadata")
+            _logger.warning("No metadata file.  The metadata should be in the same directory "
+                            "as the image and have the form xxx.seq.metadata")
 
         return
 
@@ -265,22 +220,21 @@ class SeqReader(object):
         return data["Array"]
 
     def get_image_chunk(self,
-                        im_start,
-                        chunk_size):
+                        chunk_indexes):
         with open(self.top, mode='rb') as top, open(self.bottom, mode='rb') as bottom:
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
-            data = np.empty(chunk_size,
+            chunk_shape = np.shape(chunk_indexes)
+            data = np.empty(chunk_shape,
                             dtype=self.dtype_full_list)  # creating an empty array
             max_pix = 2**12
-            for i in range(chunk_size):
-                temp_i = im_start+i
-                group, rem = np.divmod(temp_i, self.segment_prebuffer, dtype=int)
+            for chunk_ind, ind in np.ndenumerate(chunk_indexes):
+                group, rem = np.divmod(ind, self.segment_prebuffer, dtype=int)
                 top.seek(8192 +
                          group*self.image_dict["GroupingBytes"] +
                          rem * self.image_dict["ImgBytes"])
                 bottom.seek(8192 +
-                         group * self.image_dict["GroupingBytes"] +
-                         rem * self.image_dict["ImgBytes"])
+                            group * self.image_dict["GroupingBytes"] +
+                            rem * self.image_dict["ImgBytes"])
                 t = np.fromfile(top,
                                 self.dtype_split_list,
                                 count=1)
@@ -299,58 +253,56 @@ class SeqReader(object):
                         new_d["Array"] = d
                 except IndexError:
                     _logger.info(msg="Adding a Frame")
-                    print("adding a Frame")
-                data[i] = new_d
+                data[chunk_ind] = new_d
         return data["Array"]
+
+    def get_chunk_index(self,
+                        chunk_shape,
+                        nav_shape):
+        if np.prod(nav_shape) != self.image_dict["NumFrames"] and nav_shape is not None:
+            num_frames = np.prod(nav_shape)
+        else:
+            num_frames = self.image_dict["NumFrames"]
+        _logger.info("Num Frames" + str(self.image_dict["NumFrames"]))
+        indexes = da.arange(num_frames)
+        if nav_shape is not None:
+            indexes = da.reshape(indexes, nav_shape)
+        indexes = da.rechunk(indexes, chunks=chunk_shape)
+        return indexes
 
     def read_data(self,
                   lazy=False,
-                  chunk_size=None,
+                  chunk_shape=None,
                   nav_shape=None,
-                  fill_chunk=True,
                   ):
         """Reads the data from the file provided.
 
         Parameters:
         lazy: bool
             If the data should be loaded lazily
-        chunks: "str" or int
+        chunk_shape: "str" or int
             The number (or chunk size to read in) if None then the chunk size is ~100mb
-        fill_chunk: bool
-            If the chunk will be filled out (if there is extra left over)
         """
         if lazy:
-            if chunk_size is None:
+            if chunk_shape is None:
                 img_bytes = (self.image_dict["ImageWidth"] *
                              self.image_dict["ImageHeight"]) * 4
-                chunk_size = int(np.ceil(100000000/img_bytes))
-            from dask import delayed
-            from dask.array import from_delayed
-            from dask.array import concatenate
-            chunks, extra_chunk = np.divmod(self.image_dict["NumFrames"], chunk_size)
-            if fill_chunk and extra_chunk != 0:
-                chunk = [chunk_size, ] * (chunks + 1)
-            elif extra_chunk == 0:
-                chunk = [chunk_size, ] * chunks + [extra_chunk]
+                chunk_shape = int(np.ceil(100000000/img_bytes))
+            indexes = self.get_chunk_index(chunk_shape=chunk_shape,
+                                           nav_shape=nav_shape,
+                                           )
+            chunks = indexes.chunks + (self.image_dict["ImageHeight"]*2,
+                                       self.image_dict["ImageWidth"])
+            if nav_shape is not None:
+                new_axis = (len(nav_shape), len(nav_shape)+1)
             else:
-                chunk = [chunk_size, ] * chunks
-            print(chunks)
-
-            val = [delayed(self.get_image_chunk,
-                           pure=True)(chunk_size*i,
-                                      chunk_size) for i, chunk_size in enumerate(chunk)]
-            data = [from_delayed(v,
-                                 shape=(chunk_size,
-                                        self.image_dict["ImageHeight"]*2,
-                                        self.image_dict["ImageWidth"]),
-                                 dtype=self.image_dict["ImageBitDepth"])
-                    for chunk_size, v in zip(chunk, val)]
-            data = concatenate(data, axis=0)
+                new_axis = (1, 2)
+            data = indexes.map_blocks(self.get_image_chunk,
+                                      chunks=chunks,
+                                      new_axis=new_axis,
+                                      dtype=np.float32)
         else:
             data = self.get_image_data()
-        if nav_shape is not None:
-            shape = list(nav_shape) + [self.image_dict["ImageHeight"]*2, self.image_dict["ImageWidth"]]
-            data = np.reshape(data, shape)
         return data
 
 
@@ -362,7 +314,7 @@ def file_reader(top=None,
                 xml_file=None,
                 lazy=False,
                 nav_shape=None,
-                chunk_size=10):
+                chunk_shape=None):
     """Reads a .seq file.
 
     Parameters
@@ -395,13 +347,17 @@ def file_reader(top=None,
 
     seq._get_xml_file()
     seq.parse_header()
-    seq._get_dark_ref()
-    seq._get_gain_ref()
+    seq.dark_ref = read_ref(seq.dark_file,
+                            height=seq.image_dict["ImageHeight"]*2,
+                            width=seq.image_dict["ImageWidth"])
+    seq.gain_ref = read_ref(seq.gain_file,
+                            height=seq.image_dict["ImageHeight"]*2,
+                            width=seq.image_dict["ImageWidth"])
     seq.parse_metadata_file()
     axes = seq.create_axes(nav_shape)
     metadata = seq.create_metadata()
     data = seq.read_data(lazy=lazy,
-                         chunk_size=chunk_size,
+                         chunk_shape=chunk_shape,
                          nav_shape=nav_shape)
     dictionary = {
         'data': data,

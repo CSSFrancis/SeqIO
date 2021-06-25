@@ -8,7 +8,7 @@ from SeqIO.version import __version__
 
 def load_folder(folder,
                 lazy=False,
-                chunk_size=None,
+                chunk_shape=None,
                 nav_shape=None,
                 ):
     """Loads a folder of .seq type files (i.e. metadata dark/gain references
@@ -44,7 +44,7 @@ def load_folder(folder,
                 params[key] = params[key][0]
         s = load_celeritas(**params,
                            lazy=lazy,
-                           chunk_size=chunk_size,
+                           chunk_shape=chunk_shape,
                            nav_shape=nav_shape)
     return s
 
@@ -80,7 +80,7 @@ def load_celeritas(top,
                    metadata=None,
                    xml_file=None,
                    lazy=False,
-                   chunk_size=None,
+                   chunk_shape=None,
                    nav_shape=None,
                    ):
     """Loads a .seq file into hyperspy.  Metadata taken from
@@ -116,7 +116,7 @@ def load_celeritas(top,
                                metadata=metadata,
                                xml_file=xml_file,
                                lazy=lazy,
-                               chunk_size=chunk_size,
+                               chunk_shape=chunk_shape,
                                nav_shape=nav_shape),
                       lazy=lazy)
     return sig
