@@ -8,7 +8,7 @@ from SeqIO.version import __version__
 _logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
-    with dask.config.set(scheduler='processes'):
+    with dask.config.set(scheduler="single-threaded"):
         args = build_parser()
         process(**vars(args))
 
