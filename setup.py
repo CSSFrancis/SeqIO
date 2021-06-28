@@ -29,7 +29,8 @@ setup(
         "numba",
         "orix >= 0.3",
         "pyxem ",
-        "xmltodict"
+        "xmltodict",
+        "zarr"
     ],
     packages=['SeqIO'],
 )

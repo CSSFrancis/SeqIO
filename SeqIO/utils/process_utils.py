@@ -7,6 +7,7 @@ import time
 import numpy as np
 import hyperspy.api as hs
 from hyperspy.io import dict2signal
+import dask.array as da
 
 from SeqIO.SeqReader import file_reader as file_reader
 from SeqIO.CeleritasSeqReader import file_reader as cel_file_reader
@@ -134,9 +135,11 @@ def process(directory,
     _logger.info("Dtype:" + str(sig.data.dtype))
     _logger.info("Saving... ")
 
-    sig.save(directory + ".hspy",
-             compression=False,
-             overwrite=True)
+    da.to_zarr(sig.data, directory+".zarr", overwrite=True)
+
+    #sig.save(directory + ".hspy",
+    #         compression=False,
+    #         overwrite=True)
 
     tock = time.time()
     _logger.info("Total time elapsed : " + str(tock-tick) + " sec")
