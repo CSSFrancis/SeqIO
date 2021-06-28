@@ -135,7 +135,7 @@ def process(directory,
     _logger.info("Dtype:" + str(sig.data.dtype))
     _logger.info("Saving... ")
 
-    da.to_zarr(sig.data, directory+".zarr", overwrite=True)
+    da.to_zarr(sig.data, directory+"_zarr", overwrite=True)
 
     #sig.save(directory + ".hspy",
     #         compression=False,
