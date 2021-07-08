@@ -210,6 +210,7 @@ class SeqReader(object):
                                    axis=0)
                 if self.dark_ref is not None:
                     d = (d - self.dark_ref)
+                    d[d < 0] = 0
                     d[d > max_pix] = 0
                 if self.gain_ref is not None:
                     d = d * self.gain_ref  # Numpy doesn't check for overflow.
