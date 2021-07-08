@@ -33,7 +33,17 @@ def load_folder(folder,
     params["xml_file"] = glob.glob(folder+"*.xml")
     params["metadata"] = glob.glob(folder+"*.metadata")
     if len(params["top"]) == 0 and len(params["bottom"]) == 0:
-        s = load(params["seq"][0], lazy=lazy)
+        params.pop("top")
+        params.pop("bottom")
+        for key in params:
+            if len(params[key]) == 0:
+                params[key] = None
+            else:
+                params[key] = params[key][0]
+        s = load(**params,
+                 lazy=lazy,
+                 chunk_shape=chunk_shape,
+                 nav_shape=nav_shape)
         # Rewrite regular .Seq loading...
     else:
         params.pop("seq")
@@ -49,9 +59,13 @@ def load_folder(folder,
     return s
 
 
-def load(filename=None,
+def load(seq=None,
+         gain = None,
+         dark=None,
+         metadata=None,
+         xml_file=None,
          lazy=False,
-         chunks=None,
+         chunk_shape=None,
          nav_shape=None,
          ):
     """Loads a .seq file into hyperspy.  Metadata taken from
@@ -65,9 +79,13 @@ def load(filename=None,
         The name of the file to be loaded (.seq file)
 
     """
-    sig = dict2signal(file_reader(filename=filename,
+    sig = dict2signal(file_reader(filename=seq,
+                                  dark=dark,
+                                  gain=gain,
+                                  metadata=metadata,
+                                  xml_file=xml_file,
                                   lazy=lazy,
-                                  chunks=chunks,
+                                  chunk_shape=chunk_shape,
                                   nav_shape=nav_shape),
                       lazy=lazy)
     return sig

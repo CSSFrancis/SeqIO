@@ -20,6 +20,7 @@ import numpy as np
 from hyperspy.docstrings.signal import OPTIMIZE_ARG
 import struct
 from SeqIO.utils.file_utils import read_ref
+import dask.array as da
 
 
 _logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class SeqReader(object):
         self.dtype_full_list=None
 
     def parse_header(self):
-        with open(self.file, mode='rb') as file:  # b is important -> binary
+        with open(self.seq, mode='rb') as file:  # b is important -> binary
             file.seek(548)
             image_info_dtype = [(("ImageWidth"),("<u4")),
                                 (("ImageHeight"), ("<u4")),
@@ -86,7 +87,7 @@ class SeqReader(object):
     def parse_metadata_file(self):
         """ This reads the metadata from the .metadata file """
         try:
-            with open(self.file + ".metadata", 'rb') as meta:
+            with open(self.seq + ".metadata", 'rb') as meta:
                 meta.seek(320)
                 image_info_dtype = [(("SensorGain"), (np.float64)),
                                     (("Magnification"), (np.float64)),
@@ -105,10 +106,10 @@ class SeqReader(object):
                          "as the image and have the form xxx.seq.metadata")
         return
 
-    def create_axes(self, nav_shape=None, nav_names=["x","y","time"]):
+    def create_axes(self, nav_shape=None, nav_names=["x", "y", "time"]):
         axes = []
         if nav_shape is None:
-            axes.append({'name':'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
+            axes.append({'name': 'time', 'offset': 0, 'scale': 1, 'size': self.image_dict["NumFrames"],
                         'navigate': True, 'index_in_array': 0})
             axes[0]['scale'] = 1 / self.image_dict["FPS"]
         else:
@@ -127,7 +128,7 @@ class SeqReader(object):
         return axes
 
     def create_metadata(self):
-        metadata = {'General': {'original_filename': os.path.split(self.file)[1]},
+        metadata = {'General': {'original_filename': os.path.split(self.seq)[1]},
                     'Signal': {'signal_type': 'Signal2D'}}
         if self.metadata_dict is not {}:
             metadata['Acquisition_instrument'] = {'TEM':
@@ -136,7 +137,7 @@ class SeqReader(object):
         return metadata
 
     def get_image_data(self):
-        with open(self.file, mode='rb') as file:
+        with open(self.seq, mode='rb') as file:
             dtype_list = [(("Array"), self.image_dict["ImageBitDepth"],
                            (self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]))]
             # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
@@ -144,17 +145,15 @@ class SeqReader(object):
             max_pix = 2**self.image_dict["ImageBitDepthReal"]
             for i in range(self.image_dict["NumFrames"]):
                 file.seek(8192 + i * self.image_dict["ImgBytes"])
-                if self.dark_ref is not None and self.gain_ref is not None:
-                    d = np.fromfile(file, dtype_list, count=1)
+                d = np.fromfile(file, dtype_list, count=1)
+                if self.dark_ref is not None:
                     d["Array"] = (d["Array"] - self.dark_ref)
                     d["Array"][d["Array"] > max_pix] = 0
-                    d["Array"] = d["Array"] * self.gain_ref  # Numpy doesn't check for overflow.
-                    # There might be a better way to do this. OpenCV has a method for subtracting
-                    data[i] = d
-                else:
-                    data[i] = np.fromfile(file, dtype_list, count=1)
+                if self.gain_ref is not None:
+                    d["Array"] = d["Array"] * self.gain_ref
+                data[i] = d
             self.dtype_list = [(("Array"), self.image_dict["ImageBitDepth"],
-                           (self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]))]
+                               (self.image_dict["ImageWidth"], self.image_dict["ImageHeight"]))]
         return data["Array"]
 
     def get_image_chunk(self,
@@ -168,20 +167,21 @@ class SeqReader(object):
             for chunk_ind, ind in np.ndenumerate(chunk_indexes):
                 file.seek(8192 + ind * self.image_dict["ImgBytes"])
                 d = np.fromfile(file,
-                                self.dtype_split_list,
+                                self.dtype_full_list,
                                 count=1)
                 new_d = np.empty(1, dtype=self.dtype_full_list)
                 try:
+                    dtemp = d["Array"][0]
                     if self.dark_ref is not None:
-                        d = (d - self.dark_ref)
-                        d[d > max_pix] = 0
+                        dtemp = (dtemp - self.dark_ref)
+                        dtemp[dtemp < 0] = 0
+                        dtemp[dtemp > max_pix] = 0
                     if self.gain_ref is not None:
-                        d = d * self.gain_ref  # Numpy doesn't check for overflow.
+                        dtemp = dtemp * self.gain_ref  # Numpy doesn't check for overflow.
                         # There might be a better way to do this. OpenCV has a method for subtracting
-                        new_d["Array"] = d
+                    new_d["Array"] = dtemp
                 except IndexError:
                     _logger.info(msg="Adding a Frame")
-                    print("adding a Frame")
                 data[chunk_ind] = new_d
         return data["Array"]
 
@@ -192,9 +192,6 @@ class SeqReader(object):
             num_frames = np.prod(nav_shape)
         else:
             num_frames = self.image_dict["NumFrames"]
-        print("Num Frames", self.image_dict["NumFrames"])
-        print("dict ", self.image_dict )
-        print("Num Frames... ", num_frames)
         indexes = da.arange(num_frames)
         if nav_shape is not None:
             indexes = da.reshape(indexes, nav_shape)
@@ -238,6 +235,10 @@ class SeqReader(object):
 
 
 def file_reader(filename,
+                dark=None,
+                gain=None,
+                metadata=None,
+                xml_file=None,
                 lazy=False,
                 nav_shape=None,
                 chunk_shape=None):
@@ -254,12 +255,16 @@ def file_reader(filename,
         The shape for each chunk to be loaded. This has some performance implications when dealing with
         the data later...
     """
-    seq = SeqReader(filename)
+    seq = SeqReader(filename,
+                    dark,
+                    gain,
+                    metadata,
+                    xml_file)
     seq.parse_header()
-    seq.dark_ref = read_ref(seq.dark_file,
+    seq.dark_ref = read_ref(dark,
                             height=seq.image_dict["ImageHeight"],
                             width=seq.image_dict["ImageWidth"])
-    seq.gain_ref = read_ref(seq.gain_file,
+    seq.gain_ref = read_ref(gain,
                             height=seq.image_dict["ImageHeight"],
                             width=seq.image_dict["ImageWidth"])
     seq.parse_metadata_file()

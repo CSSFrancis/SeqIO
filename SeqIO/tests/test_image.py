@@ -5,22 +5,27 @@ from SeqIO.CeleritasSeqReader import SeqReader
 
 class Test4D:
     def test_load(self):
-        data = SeqIO.load("seqImage/12-55-58.276.seq", nav_shape=[4,5])
+        data = SeqIO.load("seqImage/12-55-58.276.seq",
+                          nav_shape=[4,5])
         print(data.axes_manager)
 
     def test_lazy_load(self):
-        data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True)
+        data = SeqIO.load("seqImage/12-55-58.276.seq",
+                          lazy=True)
         print(data.data)
         assert isinstance(data, LazySignal2D)
 
     def test_lazy_load_chunks(self):
-        data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True, chunks=4)
+        data = SeqIO.load("seqImage/12-55-58.276.seq",
+                          lazy=True,
+                          chunk_shape=5)
         print(data.data)
         assert isinstance(data, LazySignal2D)
 
     def test_lazy_load_chunks_nav(self):
-        data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True, chunks=4, nav_shape=(4, 5))
+        data = SeqIO.load("seqImage/12-55-58.276.seq", lazy=True, chunk_shape=(2, 2), nav_shape=(4, 5))
         print(data)
+        data.plot()
         assert isinstance(data, LazySignal2D)
 
     def test_celeritas(self):
@@ -38,7 +43,7 @@ class Test4D:
                                     metadata='/media/hdd/home/1000FPS SS7 200x200/metadata.metadata',
                                     lazy=True,
                                     nav_shape=(200, 200),
-                                    chunks=100)
+                                    chunk_shape=(10,10))
         print(data.data)
 
         print(data.metadata)

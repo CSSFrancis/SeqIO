@@ -251,7 +251,7 @@ class SeqReader(object):
                     if self.gain_ref is not None:
                         d = d * self.gain_ref  # Numpy doesn't check for overflow.
                         # There might be a better way to do this. OpenCV has a method for subtracting
-                    new_d["Array"] = d
+                    new_d["Array"] = d.astype(np.int32)
                 except IndexError:
                     _logger.info(msg="Adding a Frame")
                 data[chunk_ind] = new_d
@@ -270,6 +270,25 @@ class SeqReader(object):
             indexes = da.reshape(indexes, nav_shape)
         indexes = da.rechunk(indexes, chunks=chunk_shape)
         return indexes
+
+    def get_image_chunk_mmap(self,
+                             im_start,
+                             buffer_number):
+        # (("t_value"),("<u4")), (("Milliseconds"), ("<u2")), (("Microseconds"), ("<u2"))]
+        record_dtype = [("FRAME", np.uint16, (self.image_dict["ImageHeight"],
+                                  self.image_dict["ImageWidth"])),
+                        ("TimeStamps", bytes, 8)]
+        off = 8192 + buffer_number * self.image_dict["GroupingBytes"]
+        top = np.memmap(self.top,
+                        dtype=record_dtype,
+                        offset=off,
+                        shape=self.segment_prebuffer)
+        bottom = np.memmap(self.bottom,
+                           dtype=record_dtype,
+                           offset=off,
+                           shape=self.segment_prebuffer)
+        d = da.concatenate((da.flip(top["Frame"], axis=0), bottom["Frame"]), axis=0)
+        return d["Frame"]
 
     def read_data(self,
                   lazy=False,
